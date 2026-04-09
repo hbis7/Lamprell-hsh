@@ -1,158 +1,449 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="htmlTag">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lamprell Safety Simulator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lamprell Safety Awareness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
-
-<style>
-body {font-family:'Cairo',sans-serif;background:#f8fafc}
-.hidden{display:none}
-</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        body { font-family: 'Cairo', sans-serif; background-color: #f3f4f6; }
+        .lamprell-blue { background-color: #002D62; } /* ألوان لامبريل التقريبية */
+        .lamprell-yellow { background-color: #FDB913; }
+        .text-lamprell-blue { color: #002D62; }
+        .text-lamprell-yellow { color: #FDB913; }
+        
+        .timer-bar { transition: width 1s linear; }
+        .hidden { display: none !important; }
+        
+        /* لتنسيق اللغات التي تكتب من اليسار لليمين */
+        .ltr-mode { direction: ltr; text-align: left; }
+    </style>
 </head>
+<body class="min-h-screen flex flex-col justify-between">
 
-<body class="p-6">
+    <header class="lamprell-blue text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black tracking-wider uppercase">LAMPRELL</h1>
+                <p class="text-xs text-gray-300">Safety Awareness Portal</p>
+            </div>
+            <select id="langSelect" onchange="changeLanguage()" class="bg-white text-black text-sm rounded p-1 outline-none">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="hi">हिंदी</option>
+                <option value="tl">Tagalog</option>
+                <option value="zh">中文</option>
+            </select>
+        </div>
+    </header>
 
-<h1 class="text-3xl font-bold text-center mb-6">نظام السلامة</h1>
+    <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
+        
+        <div id="screen-login" class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md text-center">
+            <i class="fa-solid fa-hard-hat text-5xl text-lamprell-blue mb-4"></i>
+            <h2 id="t-welcome" class="text-2xl font-bold mb-6 text-gray-800">مرحباً بك في اختبار السلامة</h2>
+            <input type="text" id="userName" placeholder="أدخل اسمك هنا..." class="w-full p-3 border-2 border-gray-200 rounded-lg mb-4 focus:border-blue-800 outline-none text-center font-bold text-lg">
+            <button onclick="showWarning()" id="t-start-btn" class="w-full lamprell-yellow text-blue-900 font-black py-3 rounded-lg hover:opacity-90 transition">دخول للاختبار</button>
+            <button onclick="showScreen('screen-admin-login')" id="t-admin-btn" class="mt-4 text-sm text-gray-500 hover:text-blue-800 underline">دخول المسؤولين (Admin)</button>
+        </div>
 
-<div class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow">
+        <div id="screen-warning" class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md text-center hidden">
+            <i class="fa-solid fa-stopwatch text-5xl text-red-500 mb-4 animate-pulse"></i>
+            <h2 id="t-warning-title" class="text-2xl font-bold mb-4 text-red-600">تنبيه هام!</h2>
+            <p id="t-warning-text" class="text-gray-600 mb-6 font-bold text-lg">مدة كل سؤال هي 10 ثواني فقط. سيتم نقلك للسؤال التالي تلقائياً في حال انتهاء الوقت.</p>
+            <button onclick="startQuiz()" id="t-ready-btn" class="w-full lamprell-blue text-white font-bold py-3 rounded-lg hover:opacity-90 transition">أنا مستعد</button>
+        </div>
 
-<input id="name" class="w-full p-3 border rounded mb-4" placeholder="اكتب اسمك">
+        <div id="screen-quiz" class="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl hidden">
+            <div class="flex justify-between items-center mb-4">
+                <span id="questionCounter" class="font-bold text-gray-500">سؤال 1 / 7</span>
+                <span class="font-bold text-red-600 text-xl"><i class="fa-solid fa-clock"></i> <span id="timeDisplay">10</span>s</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="timerBar" class="bg-red-600 h-2.5 rounded-full timer-bar" style="width: 100%"></div>
+            </div>
+            
+            <h2 id="questionText" class="text-xl font-bold mb-6 text-gray-800 leading-relaxed">...</h2>
+            
+            <div id="optionsContainer" class="flex flex-col gap-3">
+                </div>
+        </div>
 
-<button onclick="start()" class="bg-red-600 text-white w-full p-3 rounded">ابدأ</button>
+        <div id="screen-result" class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md text-center hidden">
+            <i class="fa-solid fa-clipboard-check text-5xl text-green-500 mb-4"></i>
+            <h2 id="t-result-title" class="text-2xl font-bold mb-2 text-gray-800">اكتمل الاختبار!</h2>
+            <p class="text-gray-600 mb-6 font-bold"><span id="resultName"></span></p>
+            <div class="text-6xl font-black text-lamprell-blue mb-2"><span id="resultScore">0</span><span class="text-2xl text-gray-400">/7</span></div>
+            <p id="t-result-time" class="text-sm text-gray-500 mb-6">الوقت المستغرق: <span id="resultTime">0</span> ثانية</p>
+            
+            <button onclick="showLeaderboard()" id="t-view-leaderboard" class="w-full lamprell-yellow text-blue-900 font-bold py-3 rounded-lg mb-3">عرض لوحة الصدارة</button>
+            <button onclick="location.reload()" id="t-home-btn" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-lg">الصفحة الرئيسية</button>
+        </div>
 
-<div id="quiz" class="hidden mt-6">
-<h2 id="q" class="text-xl font-bold mb-4"></h2>
-<div id="answers"></div>
-<p id="timer" class="mt-4 font-bold"></p>
-</div>
+        <div id="screen-leaderboard" class="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl hidden">
+            <h2 id="t-leaderboard-title" class="text-2xl font-bold mb-6 text-center text-lamprell-blue"><i class="fa-solid fa-trophy text-lamprell-yellow"></i> لوحة الصدارة</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-center">
+                    <thead class="bg-gray-100 text-gray-600">
+                        <tr>
+                            <th class="p-3">الترتيب</th>
+                            <th class="p-3">الاسم</th>
+                            <th class="p-3">الإجابات الصحيحة</th>
+                            <th class="p-3">الوقت الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        </tbody>
+                </table>
+            </div>
+            <button onclick="location.reload()" class="mt-6 w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-lg">العودة للرئيسية</button>
+        </div>
 
-<div id="result" class="mt-6 text-center font-bold"></div>
+        <div id="screen-admin-login" class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md text-center hidden">
+            <i class="fa-solid fa-lock text-5xl text-gray-700 mb-4"></i>
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">صلاحية المسؤولين</h2>
+            <input type="password" id="adminPin" placeholder="أدخل الرقم السري..." class="w-full p-3 border-2 border-gray-200 rounded-lg mb-4 text-center font-bold text-2xl tracking-[0.5em]">
+            <button onclick="verifyAdmin()" class="w-full lamprell-blue text-white font-bold py-3 rounded-lg">دخول</button>
+            <button onclick="location.reload()" class="mt-4 text-sm text-gray-500 underline">إلغاء</button>
+        </div>
 
-<hr class="my-6">
+        <div id="screen-admin-dash" class="bg-white p-6 rounded-xl shadow-xl w-full max-w-6xl hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-lamprell-blue"><i class="fa-solid fa-chart-pie"></i> لوحة تحكم المسؤولين (Analytics)</h2>
+                <button onclick="location.reload()" class="bg-red-500 text-white px-4 py-2 rounded font-bold">تسجيل خروج</button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-center border-collapse">
+                    <thead class="lamprell-blue text-white">
+                        <tr>
+                            <th class="p-3 border">الاسم</th>
+                            <th class="p-3 border">النتيجة</th>
+                            <th class="p-3 border">الوقت (ثواني)</th>
+                            <th class="p-3 border">التاريخ</th>
+                            <th class="p-3 border">الأسئلة الخاطئة (تحليل)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody" class="text-sm">
+                        </tbody>
+                </table>
+            </div>
+        </div>
 
-<h3 class="font-bold mb-2">🏆 لوحة الصدارة</h3>
-<div id="board"></div>
+    </main>
 
-</div>
+    <footer class="text-center pb-4 pt-2">
+        <p class="text-gray-800 font-bold uppercase tracking-widest text-sm">Lamprell</p>
+        <p class="text-gray-400 text-[10px]">h.al-hzem</p>
+    </footer>
 
-<script>
+    <script>
+        // ---------------------------------------------------------
+        // 1. إعدادات قاعدة البيانات (Firebase Firestore)
+        // [تنبيه هام جداً]: لكي تعمل قاعدة البيانات، يجب عليك إنشاء مشروع مجاني في Firebase
+        // ووضع بيانات الـ Config الخاصة بك هنا بدلاً من الأصفار.
+        // ---------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // منع انهيار الموقع في حال لم يتم وضع أكواد الفايربيس (يعمل بنظام Local Storage مؤقتاً كبديل)
+        let db = null;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        } catch (e) {
+            console.warn("Firebase not configured. Using Local Storage for demo purposes.");
+        }
 
-// Firebase (جاهز)
-const firebaseConfig = {
-  apiKey: "AIzaSyCHnk6P-Y3vXb4vEN0pjS9ymbUoF2RqX-0",
-  authDomain: "lamprell-hsh.firebaseapp.com",
-  projectId: "lamprell-hsh",
-  storageBucket: "lamprell-hsh.appspot.com",
-  messagingSenderId: "312212863230",
-  appId: "1:312212863230:web:ead88f3fd60c716d310daf"
-};
+        // ---------------------------------------------------------
+        // 2. المحتوى واللغات (السيناريوهات الـ 7)
+        // ---------------------------------------------------------
+        const translations = {
+            ar: {
+                welcome: "مختبر وعي السلامة", startBtn: "دخول للاختبار", adminBtn: "دخول المسؤولين",
+                warningTitle: "تنبيه هام!", warningText: "أمامك 10 ثوانٍ فقط لاتخاذ القرار السليم في كل موقف. السرعة مطلوبة!", readyBtn: "أنا مستعد",
+                resultTitle: "اكتمل التقييم!", timeTaken: "الوقت المستغرق:", viewLeaderboard: "عرض المراكز", homeBtn: "الرئيسية",
+                lbTitle: "لوحة الصدارة (أفضل المستجيبين)", rank: "الترتيب", name: "الاسم", score: "الإجابات الصحيحة", time: "الوقت الإجمالي",
+                qs: [
+                    { q: "انطلق إنذار الحريق وأنت في الدور الثالث، ماذا تفعل؟", options: ["استخدام المصعد للخروج بسرعة", "استخدام سلالم الطوارئ بهدوء", "الانتظار في المكتب لانتهاء الإنذار"], correct: 1 },
+                    { q: "انسكبت قهوة على الأرضية في الممر الرئيسي، ماذا تفعل؟", options: ["تجاهلها لتنشف وحدها", "وضع كرسي فوقها", "تأمين المكان وإبلاغ عامل النظافة فوراً"], correct: 2 },
+                    { q: "شخص لا يرتدي بطاقة العمل (ID) يحاول الدخول خلفك من الباب المؤمن، التصرف السليم؟", options: ["فتح الباب له كنوع من اللباقة", "سؤاله عن هويته وتوجيهه للاستقبال", "تجاهله والمشي بسرعة"], correct: 1 },
+                    { q: "وصلتك رسالة بريد إلكتروني تطلب تحديث بياناتك البنكية وبها رابط غريب.", options: ["النقر على الرابط لمعرفة التفاصيل", "حذف الرسالة وإبلاغ قسم تقنية المعلومات (IT)", "إرسالها لزملائك للتأكد"], correct: 1 },
+                    { q: "تحتاج إلى رفع صندوق أوراق ثقيل من الأرض، الطريقة الصحيحة للرفع؟", options: ["النزول بثني الركبتين وإبقاء الظهر مستقيماً", "الانحناء بالظهر ورفعه بسرعة", "دفع الصندوق بالقدم"], correct: 0 },
+                    { q: "لاحظت أن مخرج الطوارئ مسدود ببعض الصناديق الفارغة.", options: ["لا بأس طالما الصناديق خفيفة", "إزالتها فوراً وإبقاء الممر سالكاً 100%", "القفز فوقها في حال الطوارئ"], correct: 1 },
+                    { q: "زميلك يوصل عدة أجهزة عالية الجهد في مشترك كهربائي واحد (Extension).", options: ["إبلاغه بخطر الحريق الكهربائي ونزعها", "تغطيتها بشريط لاصق لتكون آمنة", "الابتعاد عن مكتبه فقط"], correct: 0 }
+                ]
+            },
+            en: {
+                welcome: "Safety Awareness Lab", startBtn: "Start Test", adminBtn: "Admin Login",
+                warningTitle: "Important Notice!", warningText: "You have exactly 10 seconds per scenario. Quick and safe decisions are required!", readyBtn: "I am Ready",
+                resultTitle: "Assessment Complete!", timeTaken: "Time taken:", viewLeaderboard: "View Leaderboard", homeBtn: "Home",
+                lbTitle: "Leaderboard (Top Responders)", rank: "Rank", name: "Name", score: "Correct Answers", time: "Total Time",
+                qs: [
+                    { q: "The fire alarm rings while you are on the 3rd floor. What do you do?", options: ["Use the elevator to exit quickly", "Use emergency stairs calmly", "Wait in the office"], correct: 1 },
+                    { q: "Coffee spilled on the main corridor floor. What do you do?", options: ["Ignore it", "Put a chair over it", "Secure area & report to cleaner immediately"], correct: 2 },
+                    { q: "Someone without an ID badge tries to follow you through a secure door.", options: ["Hold the door out of politeness", "Ask for ID and direct to reception", "Ignore them"], correct: 1 },
+                    { q: "You receive an email asking for bank details with a strange link.", options: ["Click to check", "Delete and report to IT", "Forward to colleagues"], correct: 1 },
+                    { q: "You need to lift a heavy box of paper from the floor. Correct way?", options: ["Bend knees and keep back straight", "Bend back and lift quickly", "Kick the box"], correct: 0 },
+                    { q: "You notice an emergency exit is blocked by empty boxes.", options: ["It's fine if they are light", "Remove immediately, keep 100% clear", "Jump over them if needed"], correct: 1 },
+                    { q: "A colleague daisy-chains multiple high-voltage devices on one extension cord.", options: ["Warn about fire hazard and unplug", "Cover with tape", "Just stay away"], correct: 0 }
+                ]
+            },
+            // Simplified Translations for UI layout (Real systems would have full translations)
+            hi: { welcome: "सुरक्षा जागरूकता लैब", startBtn: "प्रवेश करें", adminBtn: "व्यवस्थापक", warningTitle: "चेतावनी!", warningText: "हर सवाल के लिए 10 सेकंड!", readyBtn: "मैं तैयार हूँ", resultTitle: "पूरा हुआ!", timeTaken: "समय:", viewLeaderboard: "लीडरबोर्ड", homeBtn: "होम", lbTitle: "लीडरबोर्ड", rank: "रैंक", name: "नाम", score: "स्कोर", time: "समय", qs: [] },
+            tl: { welcome: "Safety Awareness Lab", startBtn: "Pumasok", adminBtn: "Admin", warningTitle: "Babala!", warningText: "10 segundo bawat tanong!", readyBtn: "Handa na ako", resultTitle: "Tapos na!", timeTaken: "Oras:", viewLeaderboard: "Leaderboard", homeBtn: "Home", lbTitle: "Leaderboard", rank: "Rank", name: "Pangalan", score: "Score", time: "Oras", qs: [] },
+            zh: { welcome: "安全意识实验室", startBtn: "输入", adminBtn: "管理员", warningTitle: "警告！", warningText: "每个问题10秒！", readyBtn: "我准备好了", resultTitle: "完成！", timeTaken: "时间:", viewLeaderboard: "排行榜", homeBtn: "主页", lbTitle: "排行榜", rank: "排名", name: "姓名", score: "分数", time: "时间", qs: [] }
+        };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-firebase.auth().signInAnonymously();
+        // Fallback for missing translated questions (use English)
+        ['hi', 'tl', 'zh'].forEach(lang => translations[lang].qs = translations.en.qs);
 
-// الأسئلة
-const SCENARIOS = [
-{q:"وجدت سلك مكشوف ماذا تفعل؟",a:["أصلحه","أبلغ","أتجاهل"],c:1},
-{q:"حريق؟",a:["أهرب","آخذ أغراضي","أستخدم المصعد"],c:0},
-{q:"ماء على الأرض؟",a:["أبلغ","أتجاهل","أمشي"],c:0},
-{q:"إيميل يطلب كلمة السر؟",a:["أعطيه","أبلغ IT","أتجاهل"],c:1}
-];
+        // ---------------------------------------------------------
+        // 3. متغيرات النظام
+        // ---------------------------------------------------------
+        let currentLang = 'ar';
+        let currentUser = "";
+        let currentQIndex = 0;
+        let score = 0;
+        let totalTime = 0;
+        let timerInterval;
+        let questionTimeLeft = 10;
+        let wrongAnswers = [];
 
-let i=0,score=0,name="",time=0,timerInt;
+        // ---------------------------------------------------------
+        // 4. الدوال الرئيسية (Logic)
+        // ---------------------------------------------------------
+        function changeLanguage() {
+            currentLang = document.getElementById('langSelect').value;
+            const t = translations[currentLang];
+            
+            // Adjust Direction
+            const htmlTag = document.getElementById('htmlTag');
+            if (currentLang === 'ar') {
+                htmlTag.dir = 'rtl';
+                htmlTag.classList.remove('ltr-mode');
+            } else {
+                htmlTag.dir = 'ltr';
+                htmlTag.classList.add('ltr-mode');
+            }
 
-// بدء
-function start(){
-name=document.getElementById("name").value;
-if(!name) return alert("اكتب اسمك");
+            // Update UI Texts
+            document.getElementById('t-welcome').innerText = t.welcome;
+            document.getElementById('userName').placeholder = t.name;
+            document.getElementById('t-start-btn').innerText = t.startBtn;
+            document.getElementById('t-admin-btn').innerText = t.adminBtn;
+            document.getElementById('t-warning-title').innerText = t.warningTitle;
+            document.getElementById('t-warning-text').innerText = t.warningText;
+            document.getElementById('t-ready-btn').innerText = t.readyBtn;
+            document.getElementById('t-result-title').innerText = t.resultTitle;
+            document.getElementById('t-view-leaderboard').innerText = t.viewLeaderboard;
+            document.getElementById('t-home-btn').innerText = t.homeBtn;
+            document.getElementById('t-leaderboard-title').innerHTML = `<i class="fa-solid fa-trophy text-lamprell-yellow"></i> ${t.lbTitle}`;
+            
+            // Re-render question if in quiz
+            if(!document.getElementById('screen-quiz').classList.contains('hidden')) {
+                loadQuestion();
+            }
+        }
 
-document.getElementById("quiz").classList.remove("hidden");
-nextQ();
-}
+        function showScreen(screenId) {
+            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
 
-// سؤال
-function nextQ(){
-if(i>=SCENARIOS.length) return finish();
+        function showWarning() {
+            const nameInput = document.getElementById('userName').value.trim();
+            if(nameInput === "") {
+                alert(currentLang === 'ar' ? "الرجاء كتابة اسمك أولاً" : "Please enter your name");
+                return;
+            }
+            currentUser = nameInput;
+            showScreen('screen-warning');
+        }
 
-let q=SCENARIOS[i];
-document.getElementById("q").innerText=q.q;
+        function startQuiz() {
+            currentQIndex = 0;
+            score = 0;
+            totalTime = 0;
+            wrongAnswers = [];
+            showScreen('screen-quiz');
+            loadQuestion();
+        }
 
-let html="";
-q.a.forEach((x,idx)=>{
-html+=`<button class="bg-gray-100 p-3 w-full rounded mt-2" onclick="answer(${idx})">${x}</button>`;
-});
-document.getElementById("answers").innerHTML=html;
+        function loadQuestion() {
+            clearInterval(timerInterval);
+            questionTimeLeft = 10;
+            document.getElementById('timeDisplay').innerText = questionTimeLeft;
+            document.getElementById('timerBar').style.width = '100%';
+            
+            const qData = translations[currentLang].qs[currentQIndex];
+            document.getElementById('questionCounter').innerText = `${currentLang === 'ar' ? 'سؤال' : 'Q'} ${currentQIndex + 1} / 7`;
+            document.getElementById('questionText').innerText = qData.q;
+            
+            const optsContainer = document.getElementById('optionsContainer');
+            optsContainer.innerHTML = '';
+            
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-blue-800 hover:bg-blue-50 transition font-bold text-gray-700 bg-gray-50 text-right";
+                if(currentLang !== 'ar') btn.classList.replace('text-right', 'text-left');
+                btn.innerText = opt;
+                btn.onclick = () => submitAnswer(index);
+                optsContainer.appendChild(btn);
+            });
 
-startTimer();
-}
+            startTimer();
+        }
 
-// مؤقت
-function startTimer(){
-let t=10;
-document.getElementById("timer").innerText="⏱ "+t;
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                questionTimeLeft--;
+                totalTime++;
+                document.getElementById('timeDisplay').innerText = questionTimeLeft;
+                document.getElementById('timerBar').style.width = `${(questionTimeLeft / 10) * 100}%`;
+                
+                if (questionTimeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    submitAnswer(-1); // -1 يعني لم يجاوب (خطأ)
+                }
+            }, 1000);
+        }
 
-clearInterval(timerInt);
-timerInt=setInterval(()=>{
-t--; time++;
-document.getElementById("timer").innerText="⏱ "+t;
-if(t<=0) answer(-1);
-},1000);
-}
+        function submitAnswer(selectedIndex) {
+            clearInterval(timerInterval);
+            const correctIndex = translations[currentLang].qs[currentQIndex].correct;
+            
+            if (selectedIndex === correctIndex) {
+                score++;
+            } else {
+                // حفظ رقم السؤال الخاطئ لتحليل الإدارة
+                wrongAnswers.push(currentQIndex + 1);
+            }
 
-// إجابة
-function answer(idx){
-clearInterval(timerInt);
+            currentQIndex++;
+            if (currentQIndex < 7) {
+                loadQuestion();
+            } else {
+                endQuiz();
+            }
+        }
 
-if(idx===SCENARIOS[i].c) score++;
+        async function endQuiz() {
+            document.getElementById('resultName').innerText = currentUser;
+            document.getElementById('resultScore').innerText = score;
+            document.getElementById('resultTime').innerText = totalTime;
+            showScreen('screen-result');
 
-i++;
-setTimeout(nextQ,500);
-}
+            // حفظ البيانات في قاعدة البيانات
+            const record = {
+                name: currentUser,
+                score: score,
+                time: totalTime,
+                wrongQs: wrongAnswers,
+                date: new Date().toISOString()
+            };
 
-// نهاية
-function finish(){
-document.getElementById("quiz").classList.add("hidden");
-document.getElementById("result").innerHTML=
-`نتيجتك: ${score} | الوقت: ${time}s`;
+            if(db !== null) {
+                try {
+                    await db.collection("lamprell_safety_scores").add(record);
+                } catch(e) { console.error("Error saving to Firebase", e); }
+            } else {
+                // Fallback to local storage if Firebase is not setup
+                let logs = JSON.parse(localStorage.getItem('lamprell_logs') || '[]');
+                logs.push(record);
+                localStorage.setItem('lamprell_logs', JSON.stringify(logs));
+            }
+        }
 
-db.collection("leaderboard").add({
-name:name,
-score:score,
-time:time,
-created:Date.now()
-});
+        // ---------------------------------------------------------
+        // 5. لوحة الصدارة (للموظفين)
+        // ---------------------------------------------------------
+        async function showLeaderboard() {
+            showScreen('screen-leaderboard');
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-gray-500">جاري التحميل...</td></tr>`;
+            
+            let data = [];
+            if(db !== null) {
+                const snapshot = await db.collection("lamprell_safety_scores").get();
+                snapshot.forEach(doc => data.push(doc.data()));
+            } else {
+                data = JSON.parse(localStorage.getItem('lamprell_logs') || '[]');
+            }
 
-loadBoard();
-}
+            // ترتيب: الأعلى درجة، ثم الأقل وقتاً
+            data.sort((a, b) => b.score - a.score || a.time - b.time);
 
-// ليدربورد
-async function loadBoard(){
-let snap=await db.collection("leaderboard").get();
-let arr=[];
-snap.forEach(d=>arr.push(d.data()));
+            tbody.innerHTML = '';
+            if(data.length === 0) tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-gray-500">لا توجد بيانات حتى الآن</td></tr>`;
 
-arr.sort((a,b)=>b.score-a.score || a.time-b.time);
+            data.slice(0, 10).forEach((entry, index) => { // عرض أول 10 فقط للموظفين
+                const isTop = index === 0 ? 'text-yellow-500 text-xl font-black' : '';
+                tbody.innerHTML += `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="p-3 font-bold ${isTop}">${index + 1}</td>
+                        <td class="p-3 font-bold text-gray-800">${entry.name}</td>
+                        <td class="p-3 text-green-600 font-bold">${entry.score}</td>
+                        <td class="p-3 text-gray-500">${entry.time}s</td>
+                    </tr>
+                `;
+            });
+        }
 
-let html="";
-arr.slice(0,5).forEach((x,i)=>{
-html+=`<p>#${i+1} ${x.name} - ${x.score} (${x.time}s)</p>`;
-});
+        // ---------------------------------------------------------
+        // 6. لوحة تحكم المسؤولين (Admin)
+        // ---------------------------------------------------------
+        function verifyAdmin() {
+            const pin = document.getElementById('adminPin').value;
+            if(pin === '12985') {
+                loadAdminDashboard();
+            } else {
+                alert("الرقم السري خاطئ!");
+            }
+        }
 
-document.getElementById("board").innerHTML=html;
-}
+        async function loadAdminDashboard() {
+            showScreen('screen-admin-dash');
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-gray-500">جاري تحميل البيانات...</td></tr>`;
 
-loadBoard();
+            let data = [];
+            if(db !== null) {
+                const snapshot = await db.collection("lamprell_safety_scores").orderBy("date", "desc").get();
+                snapshot.forEach(doc => data.push(doc.data()));
+            } else {
+                data = JSON.parse(localStorage.getItem('lamprell_logs') || '[]');
+                data.sort((a,b) => new Date(b.date) - new Date(a.date)); // الأحدث أولاً
+            }
 
-</script>
-
+            tbody.innerHTML = '';
+            data.forEach(entry => {
+                const dateObj = new Date(entry.date);
+                const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
+                const wrongStr = entry.wrongQs && entry.wrongQs.length > 0 ? `الأسئلة: ${entry.wrongQs.join('، ')}` : '<span class="text-green-500">لا يوجد (علامة كاملة)</span>';
+                
+                tbody.innerHTML += `
+                    <tr class="border-b border-gray-200 hover:bg-blue-50">
+                        <td class="p-3 font-bold">${entry.name}</td>
+                        <td class="p-3 font-bold ${entry.score > 4 ? 'text-green-600' : 'text-red-600'}">${entry.score} / 7</td>
+                        <td class="p-3">${entry.time}</td>
+                        <td class="p-3 text-gray-500 text-xs">${dateStr}</td>
+                        <td class="p-3 text-red-500 text-xs font-bold">${wrongStr}</td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
 </body>
 </html>
