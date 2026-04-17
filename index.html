@@ -1,449 +1,1256 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="htmlTag">
+<html lang="ar" dir="rtl" id="htmlRoot">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lamprell Safety Awareness</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lamprell – Safety Awareness Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-        body { font-family: 'Cairo', sans-serif; background-color: #f3f4f6; }
-        .lamprell-blue { background-color: #002D62; } /* ألوان لامبريل التقريبية */
-        .lamprell-yellow { background-color: #FDB913; }
-        .text-lamprell-blue { color: #002D62; }
-        .text-lamprell-yellow { color: #FDB913; }
-        
-        .timer-bar { transition: width 1s linear; }
-        .hidden { display: none !important; }
-        
-        /* لتنسيق اللغات التي تكتب من اليسار لليمين */
-        .ltr-mode { direction: ltr; text-align: left; }
-    </style>
+<style>
+:root {
+  --navy: #001F4D;
+  --navy-deep: #000D24;
+  --navy-mid: #002D62;
+  --gold: #F5B800;
+  --gold-dim: #C9960A;
+  --white: #F8F9FC;
+  --grey-1: #E8EAF0;
+  --grey-2: #9AA0B4;
+  --grey-3: #4A5068;
+  --danger: #E63946;
+  --success: #2EC4B6;
+  --card-bg: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --glow: 0 0 40px rgba(245,184,0,0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  background: var(--navy-deep);
+  color: var(--white);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── Background Grid ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(245,184,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,184,0,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,45,98,0.5), transparent);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── Layout ── */
+header, main, footer { position: relative; z-index: 1; }
+
+header {
+  background: rgba(0,13,36,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px; letter-spacing: 3px;
+  color: var(--white);
+  line-height: 1;
+}
+.brand-tagline { font-size: 10px; color: var(--grey-2); letter-spacing: 2px; text-transform: uppercase; }
+.brand-badge {
+  background: var(--gold);
+  color: var(--navy-deep);
+  font-size: 9px; font-weight: 700;
+  padding: 2px 8px; border-radius: 2px;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+
+#langSelect {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 6px 12px; border-radius: 6px;
+  font-family: inherit; font-size: 13px;
+  cursor: pointer; outline: none;
+  transition: border-color 0.2s;
+}
+#langSelect:hover { border-color: var(--gold); }
+#langSelect option { background: var(--navy-mid); }
+
+main {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 24px 16px;
+}
+
+/* ── Screen System ── */
+.screen { display: none; animation: fadeUp 0.35s ease; width: 100%; }
+.screen.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Glass Card ── */
+.card {
+  background: rgba(0,29,77,0.6);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px;
+  max-width: 480px;
+  margin: 0 auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.4), var(--glow);
+}
+.card-wide { max-width: 760px; }
+.card-xl   { max-width: 1100px; }
+
+/* ── Typography ── */
+.screen-title {
+  font-size: 22px; font-weight: 700;
+  margin-bottom: 8px; line-height: 1.3;
+}
+.screen-sub {
+  font-size: 13px; color: var(--grey-2);
+  margin-bottom: 28px; line-height: 1.7;
+}
+
+/* ── Icon Circle ── */
+.icon-circle {
+  width: 72px; height: 72px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; margin: 0 auto 24px;
+}
+.icon-gold { background: rgba(245,184,0,0.12); color: var(--gold); border: 1px solid rgba(245,184,0,0.3); }
+.icon-red  { background: rgba(230,57,70,0.12); color: var(--danger); border: 1px solid rgba(230,57,70,0.3); }
+.icon-teal { background: rgba(46,196,182,0.12); color: var(--success); border: 1px solid rgba(46,196,182,0.3); }
+.icon-blue { background: rgba(0,100,200,0.15); color: #4DA3FF; border: 1px solid rgba(77,163,255,0.3); }
+
+/* ── Input ── */
+.field {
+  width: 100%; padding: 14px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 10px; color: var(--white);
+  font-family: inherit; font-size: 15px;
+  text-align: center; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 14px;
+}
+.field::placeholder { color: var(--grey-3); }
+.field:focus { border-color: var(--gold); background: rgba(245,184,0,0.05); }
+.field-pin { letter-spacing: 0.5em; font-size: 22px; font-family: 'JetBrains Mono', monospace; }
+
+/* ── Buttons ── */
+.btn {
+  display: block; width: 100%; padding: 14px;
+  border: none; border-radius: 10px;
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; text-align: center;
+  text-decoration: none; margin-bottom: 10px;
+}
+.btn:last-child { margin-bottom: 0; }
+.btn-primary {
+  background: var(--gold);
+  color: var(--navy-deep);
+  box-shadow: 0 4px 20px rgba(245,184,0,0.25);
+}
+.btn-primary:hover { background: #FFD740; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(245,184,0,0.4); }
+.btn-navy {
+  background: var(--navy-mid);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.btn-navy:hover { background: #003a7a; }
+.btn-ghost {
+  background: transparent; color: var(--grey-2);
+  font-size: 13px; font-weight: 400;
+  border: 1px solid var(--border);
+  padding: 10px;
+}
+.btn-ghost:hover { color: var(--white); border-color: var(--grey-2); }
+.btn-danger { background: rgba(230,57,70,0.15); color: var(--danger); border: 1px solid rgba(230,57,70,0.3); }
+.btn-danger:hover { background: rgba(230,57,70,0.25); }
+
+/* ── Quiz Screen ── */
+#screen-quiz .card { max-width: 620px; }
+.quiz-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.q-counter { font-size: 12px; color: var(--grey-2); letter-spacing: 1px; text-transform: uppercase; }
+.q-timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px; font-weight: 700;
+  color: var(--gold);
+  display: flex; align-items: center; gap: 6px;
+}
+.q-timer.danger { color: var(--danger); animation: pulse 0.5s infinite alternate; }
+@keyframes pulse { to { opacity: 0.5; } }
+
+.timer-track {
+  height: 3px; background: rgba(255,255,255,0.08);
+  border-radius: 2px; margin-bottom: 24px; overflow: hidden;
+}
+.timer-fill {
+  height: 100%; background: var(--gold);
+  border-radius: 2px; transition: width 1s linear, background 0.3s;
+}
+.timer-fill.danger { background: var(--danger); }
+
+.q-text {
+  font-size: 18px; font-weight: 600; line-height: 1.6;
+  margin-bottom: 24px; color: var(--white);
+  min-height: 72px;
+}
+
+.options { display: flex; flex-direction: column; gap: 10px; }
+.opt-btn {
+  width: 100%; text-align: right; padding: 14px 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px; color: var(--white);
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s;
+  display: flex; align-items: center; gap: 12px;
+  line-height: 1.4;
+}
+.opt-btn:hover { background: rgba(245,184,0,0.08); border-color: var(--gold); transform: translateX(-3px); }
+.opt-btn.correct { background: rgba(46,196,182,0.15); border-color: var(--success); color: var(--success); }
+.opt-btn.wrong   { background: rgba(230,57,70,0.12); border-color: var(--danger); color: var(--danger); }
+.opt-btn:disabled { cursor: default; }
+.opt-letter {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+[dir="ltr"] .opt-btn { text-align: left; }
+[dir="ltr"] .opt-btn:hover { transform: translateX(3px); }
+
+/* ── Result Screen ── */
+.score-ring {
+  width: 120px; height: 120px; border-radius: 50%;
+  border: 4px solid var(--gold);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  background: rgba(245,184,0,0.06);
+  box-shadow: 0 0 40px rgba(245,184,0,0.2);
+}
+.score-num { font-family: 'Bebas Neue', monospace; font-size: 52px; color: var(--gold); line-height: 1; }
+.score-denom { font-size: 12px; color: var(--grey-2); }
+
+.result-stats {
+  display: flex; gap: 12px; margin-bottom: 24px;
+}
+.stat-pill {
+  flex: 1; background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px; text-align: center;
+}
+.stat-val { font-size: 20px; font-weight: 700; color: var(--white); }
+.stat-lbl { font-size: 11px; color: var(--grey-2); margin-top: 2px; }
+
+/* ── Leaderboard ── */
+.lb-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.lb-table thead th {
+  padding: 12px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--grey-2); border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+.lb-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.lb-table tbody tr:hover { background: rgba(245,184,0,0.04); }
+.lb-table td { padding: 13px 12px; vertical-align: middle; }
+.rank-badge {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; margin: auto;
+}
+.rank-1 { background: rgba(255,215,0,0.2); color: #FFD700; border: 1px solid rgba(255,215,0,0.4); }
+.rank-2 { background: rgba(192,192,192,0.2); color: #C0C0C0; border: 1px solid rgba(192,192,192,0.4); }
+.rank-3 { background: rgba(205,127,50,0.2); color: #CD7F32; border: 1px solid rgba(205,127,50,0.4); }
+.rank-n { background: rgba(255,255,255,0.06); color: var(--grey-2); border: 1px solid var(--border); }
+.score-bar-wrap { background: rgba(255,255,255,0.06); border-radius: 4px; height: 6px; width: 100px; overflow: hidden; }
+.score-bar-fill { height: 100%; background: var(--gold); border-radius: 4px; transition: width 0.8s ease; }
+
+/* ── Admin Dashboard ── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+}
+.stat-card-val { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--gold); }
+.stat-card-lbl { font-size: 11px; color: var(--grey-2); letter-spacing: 1px; text-transform: uppercase; }
+
+.admin-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table thead { background: rgba(0,29,77,0.8); }
+.admin-table thead th {
+  padding: 12px 14px; font-size: 11px; color: var(--grey-2);
+  letter-spacing: 1px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+  text-align: right;
+}
+[dir="ltr"] .admin-table thead th { text-align: left; }
+.admin-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.admin-table tbody tr:hover { background: rgba(245,184,0,0.04); }
+.admin-table td { padding: 11px 14px; white-space: nowrap; }
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 4px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+}
+.badge-green { background: rgba(46,196,182,0.15); color: var(--success); }
+.badge-red   { background: rgba(230,57,70,0.12); color: var(--danger); }
+.badge-gold  { background: rgba(245,184,0,0.15); color: var(--gold); }
+
+/* ── Tabs ── */
+.tab-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+.tab-btn {
+  padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border);
+  background: transparent; color: var(--grey-2);
+  transition: all 0.2s; font-family: inherit;
+}
+.tab-btn.active { background: var(--gold); color: var(--navy-deep); border-color: var(--gold); }
+
+/* ── Chart bar ── */
+.chart-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.chart-label { font-size: 12px; color: var(--grey-2); width: 90px; flex-shrink: 0; }
+.chart-bar-bg { flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.chart-bar { height: 100%; background: var(--gold); border-radius: 4px; transition: width 1s ease; }
+.chart-pct { font-size: 12px; color: var(--grey-2); font-family: 'JetBrains Mono', monospace; width: 40px; text-align: left; }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--navy-mid); border: 1px solid var(--border);
+  color: var(--white); padding: 12px 24px; border-radius: 10px;
+  font-size: 14px; font-weight: 600; z-index: 9999;
+  transition: transform 0.3s ease; white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.success { border-color: var(--success); color: var(--success); }
+#toast.error   { border-color: var(--danger);  color: var(--danger); }
+
+/* ── Footer ── */
+footer {
+  text-align: center; padding: 16px;
+  border-top: 1px solid var(--border);
+  position: relative; z-index: 1;
+}
+.footer-brand { font-family: 'Bebas Neue', sans-serif; letter-spacing: 4px; font-size: 14px; color: var(--grey-3); }
+.footer-credit { font-size: 10px; color: rgba(255,255,255,0.15); letter-spacing: 2px; margin-top: 2px; }
+
+/* ── Pulse animation for warning ── */
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,184,0,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(245,184,0,0); }
+}
+.pulse-gold { animation: pulse-gold 2s infinite; }
+
+/* ── LTR adjustments ── */
+[dir="ltr"] .opt-btn { text-align: left; flex-direction: row; }
+[dir="ltr"] .card { direction: ltr; }
+[dir="ltr"] .lb-table { direction: ltr; }
+[dir="ltr"] .result-stats { direction: ltr; }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .card { padding: 24px 18px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .q-text { font-size: 16px; }
+}
+
+/* ── Loading spinner ── */
+.spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--gold);
+  animation: spin 0.8s linear infinite;
+  margin: 24px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Segment divider ── */
+.divider {
+  border: none; height: 1px;
+  background: var(--border); margin: 20px 0;
+}
+
+/* ── Warning pulsing icon ── */
+.pulse-icon { animation: pulse-icon 1.5s ease-in-out infinite; }
+@keyframes pulse-icon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* ── Correct/Wrong flash ── */
+.flash-correct { animation: flashGreen 0.5s ease; }
+.flash-wrong   { animation: flashRed 0.5s ease; }
+@keyframes flashGreen { 50% { background: rgba(46,196,182,0.15); } }
+@keyframes flashRed   { 50% { background: rgba(230,57,70,0.1); } }
+</style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
 
-    <header class="lamprell-blue text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-black tracking-wider uppercase">LAMPRELL</h1>
-                <p class="text-xs text-gray-300">Safety Awareness Portal</p>
-            </div>
-            <select id="langSelect" onchange="changeLanguage()" class="bg-white text-black text-sm rounded p-1 outline-none">
-                <option value="ar">العربية</option>
-                <option value="en">English</option>
-                <option value="hi">हिंदी</option>
-                <option value="tl">Tagalog</option>
-                <option value="zh">中文</option>
-            </select>
+<body>
+<div id="toast"></div>
+
+<header>
+  <div class="brand">
+    <div>
+      <div class="brand-logo">LAMPRELL</div>
+      <div class="brand-tagline">Safety Awareness Portal</div>
+    </div>
+    <div class="brand-badge">HSE</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <select id="langSelect" onchange="changeLanguage()">
+      <option value="ar">🇸🇦 العربية</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="hi">🇮🇳 हिंदी</option>
+      <option value="tl">🇵🇭 Tagalog</option>
+      <option value="zh">🇨🇳 中文</option>
+    </select>
+  </div>
+</header>
+
+<main>
+
+  <!-- ─── LOGIN ─── -->
+  <div class="screen active" id="screen-login">
+    <div class="card" style="text-align:center">
+      <div class="icon-circle icon-gold pulse-gold"><i class="fa-solid fa-hard-hat"></i></div>
+      <div class="screen-title" id="t-welcome">مختبر وعي السلامة</div>
+      <div class="screen-sub" id="t-welcome-sub">أجب على 7 سيناريوهات حقيقية من بيئة العمل. لكل سؤال 10 ثوانٍ فقط.</div>
+      <input type="text" class="field" id="userName" placeholder="اكتب اسمك الكامل..." autocomplete="off">
+      <button class="btn btn-primary" onclick="showWarning()" id="t-start-btn">دخول للاختبار ←</button>
+      <button class="btn btn-ghost" onclick="showScreen('screen-admin-login')" id="t-admin-btn">🔐 دخول المسؤولين</button>
+    </div>
+  </div>
+
+  <!-- ─── WARNING ─── -->
+  <div class="screen" id="screen-warning">
+    <div class="card" style="text-align:center">
+      <div class="icon-circle icon-red"><i class="fa-solid fa-stopwatch pulse-icon"></i></div>
+      <div class="screen-title" id="t-warning-title" style="color:#E63946">تنبيه قبل البدء!</div>
+      <div class="screen-sub" id="t-warning-text">أمامك <strong style="color:var(--gold)">10 ثوانٍ فقط</strong> لاتخاذ القرار الصحيح في كل موقف — تماماً كما في الواقع. السرعة والدقة معاً مطلوبتان.</div>
+      <div style="background:rgba(230,57,70,0.08);border:1px solid rgba(230,57,70,0.2);border-radius:10px;padding:14px;margin-bottom:24px;font-size:13px;color:var(--grey-2);line-height:1.7" id="t-warning-rules">
+        ✦ انتهاء الوقت = إجابة خاطئة<br>
+        ✦ لا يمكن التراجع عن الإجابة<br>
+        ✦ ستُحفظ نتائجك تلقائياً
+      </div>
+      <button class="btn btn-primary" onclick="startQuiz()" id="t-ready-btn">أنا مستعد — ابدأ</button>
+      <button class="btn btn-ghost" onclick="showScreen('screen-login')">رجوع</button>
+    </div>
+  </div>
+
+  <!-- ─── QUIZ ─── -->
+  <div class="screen" id="screen-quiz">
+    <div class="card card-wide">
+      <div class="quiz-header">
+        <span class="q-counter" id="questionCounter">سؤال 1 / 7</span>
+        <span class="q-timer" id="timerDisplay"><i class="fa-regular fa-clock"></i> <span id="timeDisplay">10</span>s</span>
+      </div>
+      <div class="timer-track"><div class="timer-fill" id="timerBar" style="width:100%"></div></div>
+      <div class="q-text" id="questionText">...</div>
+      <div class="options" id="optionsContainer"></div>
+    </div>
+  </div>
+
+  <!-- ─── RESULT ─── -->
+  <div class="screen" id="screen-result">
+    <div class="card" style="text-align:center">
+      <div class="score-ring">
+        <div class="score-num" id="resultScore">0</div>
+        <div class="score-denom">/7</div>
+      </div>
+      <div class="screen-title" id="t-result-title">اكتمل التقييم!</div>
+      <div style="font-size:14px;color:var(--grey-2);margin-bottom:20px" id="resultName"></div>
+      <div class="result-stats">
+        <div class="stat-pill">
+          <div class="stat-val" id="resultTime">0</div>
+          <div class="stat-lbl" id="t-stat-time">ثواني</div>
         </div>
-    </header>
-
-    <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
-        
-        <div id="screen-login" class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md text-center">
-            <i class="fa-solid fa-hard-hat text-5xl text-lamprell-blue mb-4"></i>
-            <h2 id="t-welcome" class="text-2xl font-bold mb-6 text-gray-800">مرحباً بك في اختبار السلامة</h2>
-            <input type="text" id="userName" placeholder="أدخل اسمك هنا..." class="w-full p-3 border-2 border-gray-200 rounded-lg mb-4 focus:border-blue-800 outline-none text-center font-bold text-lg">
-            <button onclick="showWarning()" id="t-start-btn" class="w-full lamprell-yellow text-blue-900 font-black py-3 rounded-lg hover:opacity-90 transition">دخول للاختبار</button>
-            <button onclick="showScreen('screen-admin-login')" id="t-admin-btn" class="mt-4 text-sm text-gray-500 hover:text-blue-800 underline">دخول المسؤولين (Admin)</button>
+        <div class="stat-pill">
+          <div class="stat-val" id="resultAccuracy">0%</div>
+          <div class="stat-lbl" id="t-stat-acc">الدقة</div>
         </div>
-
-        <div id="screen-warning" class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md text-center hidden">
-            <i class="fa-solid fa-stopwatch text-5xl text-red-500 mb-4 animate-pulse"></i>
-            <h2 id="t-warning-title" class="text-2xl font-bold mb-4 text-red-600">تنبيه هام!</h2>
-            <p id="t-warning-text" class="text-gray-600 mb-6 font-bold text-lg">مدة كل سؤال هي 10 ثواني فقط. سيتم نقلك للسؤال التالي تلقائياً في حال انتهاء الوقت.</p>
-            <button onclick="startQuiz()" id="t-ready-btn" class="w-full lamprell-blue text-white font-bold py-3 rounded-lg hover:opacity-90 transition">أنا مستعد</button>
+        <div class="stat-pill">
+          <div class="stat-val" id="resultRank">-</div>
+          <div class="stat-lbl" id="t-stat-rank">الترتيب</div>
         </div>
+      </div>
+      <div id="result-msg" style="background:rgba(46,196,182,0.08);border:1px solid rgba(46,196,182,0.2);border-radius:10px;padding:14px;font-size:13px;margin-bottom:24px;line-height:1.7;color:var(--grey-2)"></div>
+      <button class="btn btn-primary" onclick="showLeaderboard()" id="t-view-leaderboard">🏆 عرض لوحة الصدارة</button>
+      <button class="btn btn-ghost" onclick="location.reload()" id="t-home-btn">العودة للرئيسية</button>
+    </div>
+  </div>
 
-        <div id="screen-quiz" class="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl hidden">
-            <div class="flex justify-between items-center mb-4">
-                <span id="questionCounter" class="font-bold text-gray-500">سؤال 1 / 7</span>
-                <span class="font-bold text-red-600 text-xl"><i class="fa-solid fa-clock"></i> <span id="timeDisplay">10</span>s</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-                <div id="timerBar" class="bg-red-600 h-2.5 rounded-full timer-bar" style="width: 100%"></div>
-            </div>
-            
-            <h2 id="questionText" class="text-xl font-bold mb-6 text-gray-800 leading-relaxed">...</h2>
-            
-            <div id="optionsContainer" class="flex flex-col gap-3">
-                </div>
+  <!-- ─── LEADERBOARD ─── -->
+  <div class="screen" id="screen-leaderboard">
+    <div class="card card-wide">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <div>
+          <div style="font-size:11px;color:var(--grey-2);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px" id="t-lb-sub">أفضل المستجيبين</div>
+          <div class="screen-title" style="margin:0" id="t-lb-title"><i class="fa-solid fa-trophy" style="color:var(--gold)"></i> لوحة الصدارة</div>
         </div>
+        <button class="btn btn-ghost" style="width:auto;padding:8px 16px" onclick="location.reload()" id="t-lb-home">رجوع</button>
+      </div>
+      <table class="lb-table">
+        <thead><tr>
+          <th id="t-col-rank">الترتيب</th>
+          <th id="t-col-name">الاسم</th>
+          <th id="t-col-score">الإجابات</th>
+          <th id="t-col-time">الوقت</th>
+          <th id="t-col-date">التاريخ</th>
+        </tr></thead>
+        <tbody id="leaderboardBody"><tr><td colspan="5" style="text-align:center;padding:32px"><div class="spinner"></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
-        <div id="screen-result" class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md text-center hidden">
-            <i class="fa-solid fa-clipboard-check text-5xl text-green-500 mb-4"></i>
-            <h2 id="t-result-title" class="text-2xl font-bold mb-2 text-gray-800">اكتمل الاختبار!</h2>
-            <p class="text-gray-600 mb-6 font-bold"><span id="resultName"></span></p>
-            <div class="text-6xl font-black text-lamprell-blue mb-2"><span id="resultScore">0</span><span class="text-2xl text-gray-400">/7</span></div>
-            <p id="t-result-time" class="text-sm text-gray-500 mb-6">الوقت المستغرق: <span id="resultTime">0</span> ثانية</p>
-            
-            <button onclick="showLeaderboard()" id="t-view-leaderboard" class="w-full lamprell-yellow text-blue-900 font-bold py-3 rounded-lg mb-3">عرض لوحة الصدارة</button>
-            <button onclick="location.reload()" id="t-home-btn" class="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-lg">الصفحة الرئيسية</button>
+  <!-- ─── ADMIN LOGIN ─── -->
+  <div class="screen" id="screen-admin-login">
+    <div class="card" style="text-align:center">
+      <div class="icon-circle icon-blue"><i class="fa-solid fa-lock"></i></div>
+      <div class="screen-title">صلاحية المسؤولين</div>
+      <div class="screen-sub">أدخل الرقم السري للوصول إلى لوحة التحليلات الكاملة</div>
+      <input type="password" class="field field-pin" id="adminPin" placeholder="● ● ● ● ●" autocomplete="off">
+      <button class="btn btn-primary" onclick="verifyAdmin()">دخول</button>
+      <button class="btn btn-ghost" onclick="showScreen('screen-login')">إلغاء</button>
+    </div>
+  </div>
+
+  <!-- ─── ADMIN DASHBOARD ─── -->
+  <div class="screen" id="screen-admin-dash">
+    <div class="card card-xl">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div>
+          <div style="font-size:11px;color:var(--grey-2);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Lamprell HSE</div>
+          <div class="screen-title" style="margin:0"><i class="fa-solid fa-chart-line" style="color:var(--gold)"></i> لوحة التحكم – Analytics</div>
         </div>
-
-        <div id="screen-leaderboard" class="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl hidden">
-            <h2 id="t-leaderboard-title" class="text-2xl font-bold mb-6 text-center text-lamprell-blue"><i class="fa-solid fa-trophy text-lamprell-yellow"></i> لوحة الصدارة</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-center">
-                    <thead class="bg-gray-100 text-gray-600">
-                        <tr>
-                            <th class="p-3">الترتيب</th>
-                            <th class="p-3">الاسم</th>
-                            <th class="p-3">الإجابات الصحيحة</th>
-                            <th class="p-3">الوقت الإجمالي</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboardBody">
-                        </tbody>
-                </table>
-            </div>
-            <button onclick="location.reload()" class="mt-6 w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-lg">العودة للرئيسية</button>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost" style="width:auto;padding:8px 14px" onclick="exportCSV()"><i class="fa-solid fa-download"></i> تصدير CSV</button>
+          <button class="btn btn-ghost" style="width:auto;padding:8px 14px" onclick="clearAllData()" id="t-clear-btn">🗑 مسح الكل</button>
+          <button class="btn btn-danger" style="width:auto;padding:8px 14px" onclick="location.reload()">تسجيل خروج</button>
         </div>
+      </div>
 
-        <div id="screen-admin-login" class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md text-center hidden">
-            <i class="fa-solid fa-lock text-5xl text-gray-700 mb-4"></i>
-            <h2 class="text-2xl font-bold mb-6 text-gray-800">صلاحية المسؤولين</h2>
-            <input type="password" id="adminPin" placeholder="أدخل الرقم السري..." class="w-full p-3 border-2 border-gray-200 rounded-lg mb-4 text-center font-bold text-2xl tracking-[0.5em]">
-            <button onclick="verifyAdmin()" class="w-full lamprell-blue text-white font-bold py-3 rounded-lg">دخول</button>
-            <button onclick="location.reload()" class="mt-4 text-sm text-gray-500 underline">إلغاء</button>
+      <!-- Stats Cards -->
+      <div class="stats-row" id="adminStatsRow">
+        <div class="stat-card"><div class="stat-card-val" id="stat-total">0</div><div class="stat-card-lbl">إجمالي المشاركين</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="stat-avg">0%</div><div class="stat-card-lbl">متوسط الدرجات</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="stat-perfect">0</div><div class="stat-card-lbl">علامات كاملة 7/7</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="stat-today">0</div><div class="stat-card-lbl">مشاركون اليوم</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('tab-records','tab-analysis')" id="tab-records">📋 السجلات</button>
+        <button class="tab-btn" onclick="switchTab('tab-analysis','tab-records')" id="tab-analysis">📊 تحليل الأسئلة</button>
+      </div>
+
+      <!-- Records Tab -->
+      <div id="tab-records-content">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr>
+              <th>#</th>
+              <th id="t-th-name">الاسم</th>
+              <th id="t-th-score">النتيجة</th>
+              <th id="t-th-time">الوقت</th>
+              <th id="t-th-lang">اللغة</th>
+              <th id="t-th-date">التاريخ والوقت</th>
+              <th id="t-th-wrong">الأسئلة الخاطئة</th>
+            </tr></thead>
+            <tbody id="adminTableBody"><tr><td colspan="7" style="text-align:center;padding:32px"><div class="spinner"></div></td></tr></tbody>
+          </table>
         </div>
+      </div>
 
-        <div id="screen-admin-dash" class="bg-white p-6 rounded-xl shadow-xl w-full max-w-6xl hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-lamprell-blue"><i class="fa-solid fa-chart-pie"></i> لوحة تحكم المسؤولين (Analytics)</h2>
-                <button onclick="location.reload()" class="bg-red-500 text-white px-4 py-2 rounded font-bold">تسجيل خروج</button>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-center border-collapse">
-                    <thead class="lamprell-blue text-white">
-                        <tr>
-                            <th class="p-3 border">الاسم</th>
-                            <th class="p-3 border">النتيجة</th>
-                            <th class="p-3 border">الوقت (ثواني)</th>
-                            <th class="p-3 border">التاريخ</th>
-                            <th class="p-3 border">الأسئلة الخاطئة (تحليل)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminTableBody" class="text-sm">
-                        </tbody>
-                </table>
-            </div>
+      <!-- Analysis Tab -->
+      <div id="tab-analysis-content" style="display:none">
+        <div style="margin-bottom:16px;font-size:13px;color:var(--grey-2)">نسبة الإجابات الخاطئة لكل سؤال — الأعلى يحتاج لتدريب مكثف</div>
+        <div id="questionAnalysis"></div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-brand">LAMPRELL</div>
+  <div class="footer-credit">SAFETY AWARENESS PORTAL · h.al-hzem</div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STORAGE ENGINE — IndexedDB with LocalStorage fallback
+// Ensures data persists across sessions reliably
+// ═══════════════════════════════════════════════════════════════
+const DB_NAME = 'lamprell_hse';
+const DB_VER  = 1;
+const STORE   = 'scores';
+
+let idb = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const os = db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+        os.createIndex('date', 'date');
+        os.createIndex('score', 'score');
+      }
+    };
+    req.onsuccess = e => { idb = e.target.result; resolve(idb); };
+    req.onerror   = () => { console.warn('IndexedDB unavailable, falling back to localStorage'); resolve(null); };
+  });
+}
+
+async function saveRecord(record) {
+  if (idb) {
+    return new Promise((res, rej) => {
+      const tx = idb.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).add(record);
+      tx.oncomplete = () => res(true);
+      tx.onerror    = () => { console.error(tx.error); rej(tx.error); };
+    });
+  } else {
+    // LocalStorage fallback
+    const logs = JSON.parse(localStorage.getItem('lamprell_logs') || '[]');
+    record.id = Date.now();
+    logs.push(record);
+    localStorage.setItem('lamprell_logs', JSON.stringify(logs));
+    return true;
+  }
+}
+
+async function getAllRecords() {
+  if (idb) {
+    return new Promise((res) => {
+      const tx  = idb.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () => res(req.result || []);
+      req.onerror   = () => res([]);
+    });
+  } else {
+    return JSON.parse(localStorage.getItem('lamprell_logs') || '[]');
+  }
+}
+
+async function clearAllRecords() {
+  if (idb) {
+    return new Promise((res) => {
+      const tx = idb.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).clear();
+      tx.oncomplete = () => res(true);
+    });
+  } else {
+    localStorage.removeItem('lamprell_logs');
+    return true;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TRANSLATIONS
+// ═══════════════════════════════════════════════════════════════
+const T = {
+  ar: {
+    welcome: "مختبر وعي السلامة",
+    welcomeSub: "أجب على 7 سيناريوهات حقيقية من بيئة العمل. لكل سؤال 10 ثوانٍ فقط.",
+    startBtn: "دخول للاختبار ←",
+    adminBtn: "🔐 دخول المسؤولين",
+    warningTitle: "تنبيه قبل البدء!",
+    warningText: 'أمامك <strong style="color:var(--gold)">10 ثوانٍ فقط</strong> لاتخاذ القرار الصحيح في كل موقف — تماماً كما في الواقع.',
+    warningRules: "✦ انتهاء الوقت = إجابة خاطئة<br>✦ لا يمكن التراجع عن الإجابة<br>✦ ستُحفظ نتائجك تلقائياً",
+    readyBtn: "أنا مستعد — ابدأ",
+    back: "رجوع",
+    resultTitle: "اكتمل التقييم!",
+    secLabel: "ثواني",
+    accLabel: "الدقة",
+    rankLabel: "الترتيب",
+    viewLB: "🏆 عرض لوحة الصدارة",
+    homeBtn: "العودة للرئيسية",
+    lbSub: "أفضل المستجيبين",
+    lbTitle: "لوحة الصدارة",
+    lbHome: "رجوع",
+    colRank: "الترتيب", colName: "الاسم", colScore: "الإجابات", colTime: "الوقت", colDate: "التاريخ",
+    qLabel: "سؤال",
+    msgs: {
+      perfect: "🏆 ممتاز! أنت خبير في السلامة. استجاباتك كانت سريعة ودقيقة.",
+      good:    "✅ أداء جيد. راجع الأسئلة التي أخطأت فيها لتحسين استجاباتك.",
+      fair:    "⚠️ بحاجة لتحسين. بعض مواقف السلامة تحتاج منك مراجعة وتدريباً إضافياً.",
+      low:     "🔴 يرجى إعادة قراءة دليل السلامة والتواصل مع فريق HSE."
+    },
+    qs: [
+      { q: "انطلق إنذار الحريق وأنت في الدور الثالث. ماذا تفعل؟", options: ["استخدام المصعد للخروج بسرعة", "استخدام سلالم الطوارئ بهدوء", "الانتظار حتى يهدأ الإنذار"], correct: 1 },
+      { q: "انسكبت قهوة على الأرضية في الممر الرئيسي. ما الخطوة الأولى؟", options: ["تجاهلها حتى تنشف وحدها", "وضع كرسي فوقها تحذيراً", "تأمين المنطقة وإبلاغ عامل النظافة فوراً"], correct: 2 },
+      { q: "شخص بدون بطاقة تعريف يحاول الدخول خلفك من الباب المؤمن. ماذا تفعل؟", options: ["فتح الباب له احتراماً", "سؤاله عن هويته وتوجيهه للاستقبال", "تجاهله والمشي بسرعة"], correct: 1 },
+      { q: "استلمت بريداً إلكترونياً يطلب تحديث بياناتك البنكية بضغطة رابط غريب.", options: ["الضغط على الرابط لمعرفة التفاصيل", "حذف الرسالة وإبلاغ قسم تقنية المعلومات فوراً", "إعادة إرسالها للزملاء للتحقق"], correct: 1 },
+      { q: "تحتاج لرفع صندوق ثقيل من الأرض. ما الطريقة الصحيحة؟", options: ["ثني الركبتين وإبقاء الظهر مستقيماً", "الانحناء بالظهر للأمام ورفعه بسرعة", "دفع الصندوق بالقدم لتحريكه"], correct: 0 },
+      { q: "لاحظت أن مخرج الطوارئ مسدود بصناديق فارغة. ما تصرفك؟", options: ["لا بأس طالما الصناديق خفيفة", "إزالتها فوراً وإبقاء الممر سالكاً 100%", "التخطيط للقفز فوقها عند الطوارئ"], correct: 1 },
+      { q: "زميلك يوصل عدة أجهزة عالية الطاقة في مشترك كهربائي واحد.", options: ["إبلاغه بخطر الحريق الكهربائي ونزع الأجهزة الزائدة", "تغطية الوصلات بشريط لاصق للأمان", "الابتعاد عن مكتبه فقط"], correct: 0 }
+    ]
+  },
+
+  en: {
+    welcome: "Safety Awareness Lab",
+    welcomeSub: "Answer 7 real workplace scenarios. You have 10 seconds per question.",
+    startBtn: "Start Assessment →",
+    adminBtn: "🔐 Admin Login",
+    warningTitle: "Before You Begin!",
+    warningText: 'You have exactly <strong style="color:var(--gold)">10 seconds</strong> to make the right decision — just like in real life.',
+    warningRules: "✦ Time out = wrong answer<br>✦ You cannot undo your answer<br>✦ Results are saved automatically",
+    readyBtn: "I'm Ready — Start",
+    back: "Back",
+    resultTitle: "Assessment Complete!",
+    secLabel: "Seconds",
+    accLabel: "Accuracy",
+    rankLabel: "Rank",
+    viewLB: "🏆 View Leaderboard",
+    homeBtn: "Back to Home",
+    lbSub: "Top Responders",
+    lbTitle: "Leaderboard",
+    lbHome: "Back",
+    colRank: "Rank", colName: "Name", colScore: "Score", colTime: "Time", colDate: "Date",
+    qLabel: "Q",
+    msgs: {
+      perfect: "🏆 Excellent! You are a safety expert. Your responses were fast and accurate.",
+      good:    "✅ Good performance. Review the questions you missed to sharpen your responses.",
+      fair:    "⚠️ Needs improvement. Some safety scenarios require further review and training.",
+      low:     "🔴 Please re-read the safety manual and contact the HSE team."
+    },
+    qs: [
+      { q: "The fire alarm rings while you are on the 3rd floor. What do you do?", options: ["Use the elevator to exit quickly", "Use emergency stairs calmly", "Wait in the office for the alarm to stop"], correct: 1 },
+      { q: "Coffee spilled on the main corridor floor. What is your first step?", options: ["Ignore it until it dries", "Place a chair over it as a warning", "Secure the area and report to the cleaner immediately"], correct: 2 },
+      { q: "Someone without an ID badge tries to follow you through a secure door.", options: ["Hold the door open out of politeness", "Ask for ID and direct them to reception", "Ignore them and walk quickly"], correct: 1 },
+      { q: "You receive an email requesting bank details update with a strange link.", options: ["Click the link to check details", "Delete and report to IT immediately", "Forward to colleagues to verify"], correct: 1 },
+      { q: "You need to lift a heavy box of paper from the floor. Correct method?", options: ["Bend knees and keep back straight", "Bend forward and lift quickly", "Push the box with your foot"], correct: 0 },
+      { q: "You notice an emergency exit is blocked by empty boxes. What do you do?", options: ["It's fine if the boxes are light", "Remove them immediately, keep 100% clear", "Plan to jump over them in an emergency"], correct: 1 },
+      { q: "A colleague is daisy-chaining multiple high-wattage devices on one extension.", options: ["Warn about fire hazard and unplug excess devices", "Cover connections with tape for safety", "Simply stay away from their desk"], correct: 0 }
+    ]
+  },
+
+  hi: {
+    welcome: "सुरक्षा जागरूकता लैब",
+    welcomeSub: "7 वास्तविक कार्यस्थल परिदृश्यों का उत्तर दें। प्रत्येक प्रश्न के लिए 10 सेकंड।",
+    startBtn: "परीक्षा शुरू करें →",
+    adminBtn: "🔐 व्यवस्थापक लॉगिन",
+    warningTitle: "शुरू करने से पहले!",
+    warningText: 'आपके पास सही निर्णय लेने के लिए केवल <strong style="color:var(--gold)">10 सेकंड</strong> हैं।',
+    warningRules: "✦ समय समाप्त = गलत उत्तर<br>✦ उत्तर वापस नहीं लिया जा सकता<br>✦ परिणाम स्वचालित रूप से सहेजे जाते हैं",
+    readyBtn: "मैं तैयार हूँ — शुरू करें",
+    back: "वापस",
+    resultTitle: "मूल्यांकन पूर्ण!",
+    secLabel: "सेकंड",
+    accLabel: "सटीकता",
+    rankLabel: "रैंक",
+    viewLB: "🏆 लीडरबोर्ड देखें",
+    homeBtn: "होम पर वापस",
+    lbSub: "शीर्ष उत्तरदाता",
+    lbTitle: "लीडरबोर्ड",
+    lbHome: "वापस",
+    colRank: "रैंक", colName: "नाम", colScore: "स्कोर", colTime: "समय", colDate: "तारीख",
+    qLabel: "प्र",
+    msgs: {
+      perfect: "🏆 उत्कृष्ट! आप सुरक्षा विशेषज्ञ हैं।",
+      good:    "✅ अच्छा प्रदर्शन। गलत प्रश्नों की समीक्षा करें।",
+      fair:    "⚠️ सुधार की आवश्यकता है। अधिक प्रशिक्षण लें।",
+      low:     "🔴 कृपया सुरक्षा मैनुअल पुनः पढ़ें।"
+    },
+    qs: null // will use English
+  },
+
+  tl: {
+    welcome: "Safety Awareness Lab",
+    welcomeSub: "Sagutin ang 7 tunay na senaryo sa trabaho. 10 segundo bawat tanong.",
+    startBtn: "Simulan ang Pagsubok →",
+    adminBtn: "🔐 Admin Login",
+    warningTitle: "Bago Magsimula!",
+    warningText: 'Mayroon kang <strong style="color:var(--gold)">10 segundo lamang</strong> para gumawa ng tamang desisyon.',
+    warningRules: "✦ Naubusan ng oras = maling sagot<br>✦ Hindi mababago ang sagot<br>✦ Awtomatikong nase-save ang resulta",
+    readyBtn: "Handa Na Ako — Magsimula",
+    back: "Bumalik",
+    resultTitle: "Kumpleto ang Pagtatasa!",
+    secLabel: "Segundo",
+    accLabel: "Katumpakan",
+    rankLabel: "Ranggo",
+    viewLB: "🏆 Tingnan ang Leaderboard",
+    homeBtn: "Bumalik sa Home",
+    lbSub: "Pinakamahusay na Tumugon",
+    lbTitle: "Leaderboard",
+    lbHome: "Bumalik",
+    colRank: "Ranggo", colName: "Pangalan", colScore: "Iskor", colTime: "Oras", colDate: "Petsa",
+    qLabel: "T",
+    msgs: {
+      perfect: "🏆 Napakahusay! Ikaw ay eksperto sa kaligtasan.",
+      good:    "✅ Magandang pagganap. Suriin ang mga napalampas.",
+      fair:    "⚠️ Kailangan ng pagpapabuti. Dumalo sa karagdagang pagsasanay.",
+      low:     "🔴 Mangyaring basahin muli ang safety manual."
+    },
+    qs: null
+  },
+
+  zh: {
+    welcome: "安全意识实验室",
+    welcomeSub: "回答7个真实工作场所情景。每道题10秒钟。",
+    startBtn: "开始测试 →",
+    adminBtn: "🔐 管理员登录",
+    warningTitle: "开始前注意！",
+    warningText: '你只有 <strong style="color:var(--gold)">10秒钟</strong> 做出正确决定——就像在现实中一样。',
+    warningRules: "✦ 超时 = 错误答案<br>✦ 无法撤销答案<br>✦ 结果自动保存",
+    readyBtn: "我准备好了 — 开始",
+    back: "返回",
+    resultTitle: "评估完成！",
+    secLabel: "秒",
+    accLabel: "准确率",
+    rankLabel: "排名",
+    viewLB: "🏆 查看排行榜",
+    homeBtn: "返回首页",
+    lbSub: "最佳响应者",
+    lbTitle: "排行榜",
+    lbHome: "返回",
+    colRank: "排名", colName: "姓名", colScore: "分数", colTime: "时间", colDate: "日期",
+    qLabel: "题",
+    msgs: {
+      perfect: "🏆 出色！您是安全专家。",
+      good:    "✅ 表现良好。请复习您答错的问题。",
+      fair:    "⚠️ 需要改进。请参加更多培训。",
+      low:     "🔴 请重新阅读安全手册并联系HSE团队。"
+    },
+    qs: null
+  }
+};
+
+// Fill missing question sets with English
+['hi','tl','zh'].forEach(l => { if (!T[l].qs) T[l].qs = T.en.qs; });
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let lang       = 'ar';
+let user       = '';
+let qIndex     = 0;
+let score      = 0;
+let totalTime  = 0;
+let wrongQs    = [];
+let timerInt   = null;
+let qTimeLeft  = 10;
+let answered   = false;
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+(async function init() {
+  await openDB();
+  renderUI();
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// LANGUAGE
+// ═══════════════════════════════════════════════════════════════
+function changeLanguage() {
+  lang = document.getElementById('langSelect').value;
+  renderUI();
+}
+
+function renderUI() {
+  const t   = T[lang];
+  const rtl = (lang === 'ar');
+
+  document.getElementById('htmlRoot').dir = rtl ? 'rtl' : 'ltr';
+
+  set('t-welcome',       t.welcome);
+  set('t-welcome-sub',   t.welcomeSub);
+  set('t-start-btn',     t.startBtn);
+  set('t-admin-btn',     t.adminBtn);
+  set('t-warning-title', t.warningTitle);
+  set('t-warning-rules', t.warningRules);
+  set('t-ready-btn',     t.readyBtn);
+  set('t-result-title',  t.resultTitle);
+  set('t-stat-time',     t.secLabel);
+  set('t-stat-acc',      t.accLabel);
+  set('t-stat-rank',     t.rankLabel);
+  set('t-view-leaderboard', t.viewLB);
+  set('t-home-btn',      t.homeBtn);
+  set('t-lb-sub',        t.lbSub);
+  set('t-lb-title',      `<i class="fa-solid fa-trophy" style="color:var(--gold)"></i> ${t.lbTitle}`);
+  set('t-lb-home',       t.lbHome);
+  set('t-col-rank',      t.colRank);
+  set('t-col-name',      t.colName);
+  set('t-col-score',     t.colScore);
+  set('t-col-time',      t.colTime);
+  set('t-col-date',      t.colDate);
+
+  innerHTML('t-warning-text', t.warningText);
+
+  // Re-render quiz if visible
+  const qScreen = document.getElementById('screen-quiz');
+  if (qScreen && qScreen.classList.contains('active')) loadQuestion();
+}
+
+function set(id, txt) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = txt;
+}
+function innerHTML(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCREEN NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// QUIZ FLOW
+// ═══════════════════════════════════════════════════════════════
+function showWarning() {
+  const name = document.getElementById('userName').value.trim();
+  if (!name) { toast(lang === 'ar' ? 'الرجاء كتابة اسمك أولاً' : 'Please enter your name first', 'error'); return; }
+  user = name;
+  showScreen('screen-warning');
+}
+
+function startQuiz() {
+  qIndex    = 0; score = 0; totalTime = 0; wrongQs = [];
+  showScreen('screen-quiz');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  clearInterval(timerInt);
+  qTimeLeft = 10;
+  answered  = false;
+
+  const t    = T[lang];
+  const qData = t.qs[qIndex];
+  const labels = ['A','B','C'];
+
+  document.getElementById('questionCounter').textContent = `${t.qLabel} ${qIndex + 1} / 7`;
+  document.getElementById('questionText').textContent    = qData.q;
+  document.getElementById('timeDisplay').textContent     = '10';
+  document.getElementById('timerBar').style.width        = '100%';
+  document.getElementById('timerBar').classList.remove('danger');
+  document.getElementById('timerDisplay').classList.remove('danger');
+
+  const cont = document.getElementById('optionsContainer');
+  cont.innerHTML = '';
+  qData.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-letter">${labels[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => submitAnswer(i);
+    cont.appendChild(btn);
+  });
+
+  startTimer();
+}
+
+function startTimer() {
+  timerInt = setInterval(() => {
+    qTimeLeft--;
+    totalTime++;
+    document.getElementById('timeDisplay').textContent = qTimeLeft;
+    document.getElementById('timerBar').style.width    = `${(qTimeLeft / 10) * 100}%`;
+
+    if (qTimeLeft <= 3) {
+      document.getElementById('timerBar').classList.add('danger');
+      document.getElementById('timerDisplay').classList.add('danger');
+    }
+    if (qTimeLeft <= 0) {
+      clearInterval(timerInt);
+      submitAnswer(-1);
+    }
+  }, 1000);
+}
+
+function submitAnswer(sel) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInt);
+
+  const correct = T[lang].qs[qIndex].correct;
+  const btns    = document.querySelectorAll('.opt-btn');
+
+  btns.forEach(b => b.disabled = true);
+
+  if (sel === correct) {
+    score++;
+    if (btns[sel]) btns[sel].classList.add('correct');
+    document.getElementById('screen-quiz').querySelector('.card').classList.add('flash-correct');
+  } else {
+    if (sel >= 0 && btns[sel]) btns[sel].classList.add('wrong');
+    if (btns[correct])         btns[correct].classList.add('correct');
+    wrongQs.push(qIndex + 1);
+    document.getElementById('screen-quiz').querySelector('.card').classList.add('flash-wrong');
+  }
+
+  setTimeout(() => {
+    document.getElementById('screen-quiz').querySelector('.card').classList.remove('flash-correct','flash-wrong');
+    qIndex++;
+    if (qIndex < 7) loadQuestion();
+    else endQuiz();
+  }, 700);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// END & SAVE
+// ═══════════════════════════════════════════════════════════════
+async function endQuiz() {
+  const acc = Math.round((score / 7) * 100);
+  const t   = T[lang];
+
+  document.getElementById('resultScore').textContent    = score;
+  document.getElementById('resultTime').textContent     = totalTime;
+  document.getElementById('resultAccuracy').textContent = acc + '%';
+  document.getElementById('resultName').textContent     = user;
+
+  // Message
+  let msg = score === 7 ? t.msgs.perfect : score >= 5 ? t.msgs.good : score >= 3 ? t.msgs.fair : t.msgs.low;
+  document.getElementById('result-msg').innerHTML = msg;
+
+  showScreen('screen-result');
+
+  const record = {
+    name: user, score, time: totalTime,
+    wrongQs, lang,
+    accuracy: acc,
+    date: new Date().toISOString()
+  };
+
+  try {
+    await saveRecord(record);
+    toast(lang === 'ar' ? '✓ تم حفظ نتيجتك' : '✓ Result saved', 'success');
+  } catch(e) {
+    console.error('Save failed', e);
+  }
+
+  // Calculate rank
+  try {
+    const all = await getAllRecords();
+    all.sort((a,b) => b.score - a.score || a.time - b.time);
+    const rank = all.findIndex(r => r.name === user && r.score === score && r.time === totalTime) + 1;
+    document.getElementById('resultRank').textContent = rank > 0 ? `#${rank}` : '-';
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════════════════════════
+async function showLeaderboard() {
+  showScreen('screen-leaderboard');
+  const tbody = document.getElementById('leaderboardBody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px"><div class="spinner"></div></td></tr>';
+
+  const data = await getAllRecords();
+  data.sort((a,b) => b.score - a.score || a.time - b.time);
+
+  tbody.innerHTML = '';
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--grey-2)">
+      ${lang === 'ar' ? 'لا توجد بيانات حتى الآن' : 'No data yet'}</td></tr>`;
+    return;
+  }
+
+  data.slice(0, 15).forEach((entry, i) => {
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    const rankIcon  = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i+1;
+    const barW      = Math.round((entry.score / 7) * 100);
+    const d         = new Date(entry.date);
+    const dateStr   = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+
+    tbody.innerHTML += `
+      <tr>
+        <td><div class="rank-badge ${rankClass}" style="margin:auto">${rankIcon}</div></td>
+        <td style="font-weight:700;color:var(--white)">${escHtml(entry.name)}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-weight:700;color:var(--gold)">${entry.score}/7</span>
+            <div class="score-bar-wrap"><div class="score-bar-fill" style="width:${barW}%"></div></div>
+          </div>
+        </td>
+        <td style="font-family:'JetBrains Mono',monospace;color:var(--grey-2)">${entry.time}s</td>
+        <td style="color:var(--grey-3);font-size:12px">${dateStr}</td>
+      </tr>`;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════════════════════════════
+function verifyAdmin() {
+  const pin = document.getElementById('adminPin').value;
+  if (pin === '12985') {
+    document.getElementById('adminPin').value = '';
+    loadAdminDashboard();
+  } else {
+    toast(lang === 'ar' ? 'الرقم السري خاطئ!' : 'Wrong PIN!', 'error');
+    document.getElementById('adminPin').value = '';
+  }
+}
+
+async function loadAdminDashboard() {
+  showScreen('screen-admin-dash');
+
+  const data = await getAllRecords();
+  data.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  // Stats
+  const today = new Date().toDateString();
+  const todayCount = data.filter(r => new Date(r.date).toDateString() === today).length;
+  const avgScore   = data.length ? (data.reduce((s,r) => s + r.score, 0) / data.length) : 0;
+  const perfCount  = data.filter(r => r.score === 7).length;
+
+  document.getElementById('stat-total').textContent  = data.length;
+  document.getElementById('stat-avg').textContent    = Math.round((avgScore/7)*100) + '%';
+  document.getElementById('stat-perfect').textContent= perfCount;
+  document.getElementById('stat-today').textContent  = todayCount;
+
+  // Records table
+  const tbody = document.getElementById('adminTableBody');
+  tbody.innerHTML = '';
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--grey-2)">لا توجد بيانات</td></tr>`;
+  }
+
+  data.forEach((entry, i) => {
+    const d       = new Date(entry.date);
+    const dateStr = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+    const wrongStr = entry.wrongQs && entry.wrongQs.length > 0
+      ? entry.wrongQs.map(q => `<span class="badge badge-red">Q${q}</span>`).join(' ')
+      : `<span class="badge badge-green">${lang==='ar'?'علامة كاملة':'Perfect'}</span>`;
+    const scoreBadge = entry.score >= 6 ? 'badge-green' : entry.score >= 4 ? 'badge-gold' : 'badge-red';
+
+    tbody.innerHTML += `
+      <tr>
+        <td style="color:var(--grey-3);font-family:'JetBrains Mono',monospace">${i+1}</td>
+        <td style="font-weight:600">${escHtml(entry.name)}</td>
+        <td><span class="badge ${scoreBadge}">${entry.score} / 7</span></td>
+        <td style="font-family:'JetBrains Mono',monospace">${entry.time}s</td>
+        <td><span class="badge" style="background:rgba(255,255,255,0.06);color:var(--grey-2)">${entry.lang || 'ar'}</span></td>
+        <td style="color:var(--grey-3);font-size:12px">${dateStr}</td>
+        <td>${wrongStr}</td>
+      </tr>`;
+  });
+
+  // Question Analysis
+  const qWrongCount = Array(7).fill(0);
+  data.forEach(r => { if (r.wrongQs) r.wrongQs.forEach(q => qWrongCount[q-1]++); });
+
+  const analysisEl = document.getElementById('questionAnalysis');
+  analysisEl.innerHTML = '';
+  qWrongCount.forEach((cnt, i) => {
+    const pct = data.length ? Math.round((cnt / data.length) * 100) : 0;
+    const color = pct >= 60 ? '#E63946' : pct >= 40 ? '#F5B800' : '#2EC4B6';
+    analysisEl.innerHTML += `
+      <div class="chart-row">
+        <div class="chart-label" style="color:var(--grey-2)">Q${i+1}</div>
+        <div class="chart-bar-bg">
+          <div class="chart-bar" style="width:${pct}%;background:${color}"></div>
         </div>
+        <div class="chart-pct" style="color:${color}">${pct}%</div>
+        <div style="font-size:11px;color:var(--grey-3);margin-right:8px">${cnt} ${lang==='ar'?'خطأ':'errors'}</div>
+      </div>`;
+  });
+}
 
-    </main>
+async function clearAllData() {
+  const msg = lang === 'ar' ? 'هل أنت متأكد من مسح جميع البيانات؟ هذا الإجراء لا يمكن التراجع عنه.' : 'Delete ALL data? This cannot be undone.';
+  if (!confirm(msg)) return;
+  await clearAllRecords();
+  toast(lang === 'ar' ? '✓ تم مسح جميع البيانات' : '✓ All data cleared', 'success');
+  loadAdminDashboard();
+}
 
-    <footer class="text-center pb-4 pt-2">
-        <p class="text-gray-800 font-bold uppercase tracking-widest text-sm">Lamprell</p>
-        <p class="text-gray-400 text-[10px]">h.al-hzem</p>
-    </footer>
+async function exportCSV() {
+  const data = await getAllRecords();
+  if (!data.length) { toast(lang === 'ar' ? 'لا توجد بيانات للتصدير' : 'No data to export', 'error'); return; }
 
-    <script>
-        // ---------------------------------------------------------
-        // 1. إعدادات قاعدة البيانات (Firebase Firestore)
-        // [تنبيه هام جداً]: لكي تعمل قاعدة البيانات، يجب عليك إنشاء مشروع مجاني في Firebase
-        // ووضع بيانات الـ Config الخاصة بك هنا بدلاً من الأصفار.
-        // ---------------------------------------------------------
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-        
-        // منع انهيار الموقع في حال لم يتم وضع أكواد الفايربيس (يعمل بنظام Local Storage مؤقتاً كبديل)
-        let db = null;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-        } catch (e) {
-            console.warn("Firebase not configured. Using Local Storage for demo purposes.");
-        }
+  const headers = ['Name','Score','Time(s)','Accuracy%','Language','Date','WrongQuestions'];
+  const rows = data.map(r => [
+    `"${r.name}"`, r.score, r.time,
+    Math.round((r.score/7)*100),
+    r.lang || 'ar',
+    new Date(r.date).toLocaleString(),
+    `"${(r.wrongQs||[]).join(',')}"`
+  ]);
 
-        // ---------------------------------------------------------
-        // 2. المحتوى واللغات (السيناريوهات الـ 7)
-        // ---------------------------------------------------------
-        const translations = {
-            ar: {
-                welcome: "مختبر وعي السلامة", startBtn: "دخول للاختبار", adminBtn: "دخول المسؤولين",
-                warningTitle: "تنبيه هام!", warningText: "أمامك 10 ثوانٍ فقط لاتخاذ القرار السليم في كل موقف. السرعة مطلوبة!", readyBtn: "أنا مستعد",
-                resultTitle: "اكتمل التقييم!", timeTaken: "الوقت المستغرق:", viewLeaderboard: "عرض المراكز", homeBtn: "الرئيسية",
-                lbTitle: "لوحة الصدارة (أفضل المستجيبين)", rank: "الترتيب", name: "الاسم", score: "الإجابات الصحيحة", time: "الوقت الإجمالي",
-                qs: [
-                    { q: "انطلق إنذار الحريق وأنت في الدور الثالث، ماذا تفعل؟", options: ["استخدام المصعد للخروج بسرعة", "استخدام سلالم الطوارئ بهدوء", "الانتظار في المكتب لانتهاء الإنذار"], correct: 1 },
-                    { q: "انسكبت قهوة على الأرضية في الممر الرئيسي، ماذا تفعل؟", options: ["تجاهلها لتنشف وحدها", "وضع كرسي فوقها", "تأمين المكان وإبلاغ عامل النظافة فوراً"], correct: 2 },
-                    { q: "شخص لا يرتدي بطاقة العمل (ID) يحاول الدخول خلفك من الباب المؤمن، التصرف السليم؟", options: ["فتح الباب له كنوع من اللباقة", "سؤاله عن هويته وتوجيهه للاستقبال", "تجاهله والمشي بسرعة"], correct: 1 },
-                    { q: "وصلتك رسالة بريد إلكتروني تطلب تحديث بياناتك البنكية وبها رابط غريب.", options: ["النقر على الرابط لمعرفة التفاصيل", "حذف الرسالة وإبلاغ قسم تقنية المعلومات (IT)", "إرسالها لزملائك للتأكد"], correct: 1 },
-                    { q: "تحتاج إلى رفع صندوق أوراق ثقيل من الأرض، الطريقة الصحيحة للرفع؟", options: ["النزول بثني الركبتين وإبقاء الظهر مستقيماً", "الانحناء بالظهر ورفعه بسرعة", "دفع الصندوق بالقدم"], correct: 0 },
-                    { q: "لاحظت أن مخرج الطوارئ مسدود ببعض الصناديق الفارغة.", options: ["لا بأس طالما الصناديق خفيفة", "إزالتها فوراً وإبقاء الممر سالكاً 100%", "القفز فوقها في حال الطوارئ"], correct: 1 },
-                    { q: "زميلك يوصل عدة أجهزة عالية الجهد في مشترك كهربائي واحد (Extension).", options: ["إبلاغه بخطر الحريق الكهربائي ونزعها", "تغطيتها بشريط لاصق لتكون آمنة", "الابتعاد عن مكتبه فقط"], correct: 0 }
-                ]
-            },
-            en: {
-                welcome: "Safety Awareness Lab", startBtn: "Start Test", adminBtn: "Admin Login",
-                warningTitle: "Important Notice!", warningText: "You have exactly 10 seconds per scenario. Quick and safe decisions are required!", readyBtn: "I am Ready",
-                resultTitle: "Assessment Complete!", timeTaken: "Time taken:", viewLeaderboard: "View Leaderboard", homeBtn: "Home",
-                lbTitle: "Leaderboard (Top Responders)", rank: "Rank", name: "Name", score: "Correct Answers", time: "Total Time",
-                qs: [
-                    { q: "The fire alarm rings while you are on the 3rd floor. What do you do?", options: ["Use the elevator to exit quickly", "Use emergency stairs calmly", "Wait in the office"], correct: 1 },
-                    { q: "Coffee spilled on the main corridor floor. What do you do?", options: ["Ignore it", "Put a chair over it", "Secure area & report to cleaner immediately"], correct: 2 },
-                    { q: "Someone without an ID badge tries to follow you through a secure door.", options: ["Hold the door out of politeness", "Ask for ID and direct to reception", "Ignore them"], correct: 1 },
-                    { q: "You receive an email asking for bank details with a strange link.", options: ["Click to check", "Delete and report to IT", "Forward to colleagues"], correct: 1 },
-                    { q: "You need to lift a heavy box of paper from the floor. Correct way?", options: ["Bend knees and keep back straight", "Bend back and lift quickly", "Kick the box"], correct: 0 },
-                    { q: "You notice an emergency exit is blocked by empty boxes.", options: ["It's fine if they are light", "Remove immediately, keep 100% clear", "Jump over them if needed"], correct: 1 },
-                    { q: "A colleague daisy-chains multiple high-voltage devices on one extension cord.", options: ["Warn about fire hazard and unplug", "Cover with tape", "Just stay away"], correct: 0 }
-                ]
-            },
-            // Simplified Translations for UI layout (Real systems would have full translations)
-            hi: { welcome: "सुरक्षा जागरूकता लैब", startBtn: "प्रवेश करें", adminBtn: "व्यवस्थापक", warningTitle: "चेतावनी!", warningText: "हर सवाल के लिए 10 सेकंड!", readyBtn: "मैं तैयार हूँ", resultTitle: "पूरा हुआ!", timeTaken: "समय:", viewLeaderboard: "लीडरबोर्ड", homeBtn: "होम", lbTitle: "लीडरबोर्ड", rank: "रैंक", name: "नाम", score: "स्कोर", time: "समय", qs: [] },
-            tl: { welcome: "Safety Awareness Lab", startBtn: "Pumasok", adminBtn: "Admin", warningTitle: "Babala!", warningText: "10 segundo bawat tanong!", readyBtn: "Handa na ako", resultTitle: "Tapos na!", timeTaken: "Oras:", viewLeaderboard: "Leaderboard", homeBtn: "Home", lbTitle: "Leaderboard", rank: "Rank", name: "Pangalan", score: "Score", time: "Oras", qs: [] },
-            zh: { welcome: "安全意识实验室", startBtn: "输入", adminBtn: "管理员", warningTitle: "警告！", warningText: "每个问题10秒！", readyBtn: "我准备好了", resultTitle: "完成！", timeTaken: "时间:", viewLeaderboard: "排行榜", homeBtn: "主页", lbTitle: "排行榜", rank: "排名", name: "姓名", score: "分数", time: "时间", qs: [] }
-        };
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `lamprell_hse_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(lang === 'ar' ? '✓ تم تصدير البيانات' : '✓ Data exported', 'success');
+}
 
-        // Fallback for missing translated questions (use English)
-        ['hi', 'tl', 'zh'].forEach(lang => translations[lang].qs = translations.en.qs);
+// ═══════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════
+function switchTab(activeId, inactiveId) {
+  document.getElementById(activeId).classList.add('active');
+  document.getElementById(inactiveId).classList.remove('active');
+  document.getElementById(activeId + '-content').style.display = 'block';
+  document.getElementById(inactiveId + '-content').style.display = 'none';
+}
 
-        // ---------------------------------------------------------
-        // 3. متغيرات النظام
-        // ---------------------------------------------------------
-        let currentLang = 'ar';
-        let currentUser = "";
-        let currentQIndex = 0;
-        let score = 0;
-        let totalTime = 0;
-        let timerInterval;
-        let questionTimeLeft = 10;
-        let wrongAnswers = [];
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = `show ${type}`;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = ''; }, 2800);
+}
 
-        // ---------------------------------------------------------
-        // 4. الدوال الرئيسية (Logic)
-        // ---------------------------------------------------------
-        function changeLanguage() {
-            currentLang = document.getElementById('langSelect').value;
-            const t = translations[currentLang];
-            
-            // Adjust Direction
-            const htmlTag = document.getElementById('htmlTag');
-            if (currentLang === 'ar') {
-                htmlTag.dir = 'rtl';
-                htmlTag.classList.remove('ltr-mode');
-            } else {
-                htmlTag.dir = 'ltr';
-                htmlTag.classList.add('ltr-mode');
-            }
-
-            // Update UI Texts
-            document.getElementById('t-welcome').innerText = t.welcome;
-            document.getElementById('userName').placeholder = t.name;
-            document.getElementById('t-start-btn').innerText = t.startBtn;
-            document.getElementById('t-admin-btn').innerText = t.adminBtn;
-            document.getElementById('t-warning-title').innerText = t.warningTitle;
-            document.getElementById('t-warning-text').innerText = t.warningText;
-            document.getElementById('t-ready-btn').innerText = t.readyBtn;
-            document.getElementById('t-result-title').innerText = t.resultTitle;
-            document.getElementById('t-view-leaderboard').innerText = t.viewLeaderboard;
-            document.getElementById('t-home-btn').innerText = t.homeBtn;
-            document.getElementById('t-leaderboard-title').innerHTML = `<i class="fa-solid fa-trophy text-lamprell-yellow"></i> ${t.lbTitle}`;
-            
-            // Re-render question if in quiz
-            if(!document.getElementById('screen-quiz').classList.contains('hidden')) {
-                loadQuestion();
-            }
-        }
-
-        function showScreen(screenId) {
-            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
-        }
-
-        function showWarning() {
-            const nameInput = document.getElementById('userName').value.trim();
-            if(nameInput === "") {
-                alert(currentLang === 'ar' ? "الرجاء كتابة اسمك أولاً" : "Please enter your name");
-                return;
-            }
-            currentUser = nameInput;
-            showScreen('screen-warning');
-        }
-
-        function startQuiz() {
-            currentQIndex = 0;
-            score = 0;
-            totalTime = 0;
-            wrongAnswers = [];
-            showScreen('screen-quiz');
-            loadQuestion();
-        }
-
-        function loadQuestion() {
-            clearInterval(timerInterval);
-            questionTimeLeft = 10;
-            document.getElementById('timeDisplay').innerText = questionTimeLeft;
-            document.getElementById('timerBar').style.width = '100%';
-            
-            const qData = translations[currentLang].qs[currentQIndex];
-            document.getElementById('questionCounter').innerText = `${currentLang === 'ar' ? 'سؤال' : 'Q'} ${currentQIndex + 1} / 7`;
-            document.getElementById('questionText').innerText = qData.q;
-            
-            const optsContainer = document.getElementById('optionsContainer');
-            optsContainer.innerHTML = '';
-            
-            qData.options.forEach((opt, index) => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-blue-800 hover:bg-blue-50 transition font-bold text-gray-700 bg-gray-50 text-right";
-                if(currentLang !== 'ar') btn.classList.replace('text-right', 'text-left');
-                btn.innerText = opt;
-                btn.onclick = () => submitAnswer(index);
-                optsContainer.appendChild(btn);
-            });
-
-            startTimer();
-        }
-
-        function startTimer() {
-            timerInterval = setInterval(() => {
-                questionTimeLeft--;
-                totalTime++;
-                document.getElementById('timeDisplay').innerText = questionTimeLeft;
-                document.getElementById('timerBar').style.width = `${(questionTimeLeft / 10) * 100}%`;
-                
-                if (questionTimeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    submitAnswer(-1); // -1 يعني لم يجاوب (خطأ)
-                }
-            }, 1000);
-        }
-
-        function submitAnswer(selectedIndex) {
-            clearInterval(timerInterval);
-            const correctIndex = translations[currentLang].qs[currentQIndex].correct;
-            
-            if (selectedIndex === correctIndex) {
-                score++;
-            } else {
-                // حفظ رقم السؤال الخاطئ لتحليل الإدارة
-                wrongAnswers.push(currentQIndex + 1);
-            }
-
-            currentQIndex++;
-            if (currentQIndex < 7) {
-                loadQuestion();
-            } else {
-                endQuiz();
-            }
-        }
-
-        async function endQuiz() {
-            document.getElementById('resultName').innerText = currentUser;
-            document.getElementById('resultScore').innerText = score;
-            document.getElementById('resultTime').innerText = totalTime;
-            showScreen('screen-result');
-
-            // حفظ البيانات في قاعدة البيانات
-            const record = {
-                name: currentUser,
-                score: score,
-                time: totalTime,
-                wrongQs: wrongAnswers,
-                date: new Date().toISOString()
-            };
-
-            if(db !== null) {
-                try {
-                    await db.collection("lamprell_safety_scores").add(record);
-                } catch(e) { console.error("Error saving to Firebase", e); }
-            } else {
-                // Fallback to local storage if Firebase is not setup
-                let logs = JSON.parse(localStorage.getItem('lamprell_logs') || '[]');
-                logs.push(record);
-                localStorage.setItem('lamprell_logs', JSON.stringify(logs));
-            }
-        }
-
-        // ---------------------------------------------------------
-        // 5. لوحة الصدارة (للموظفين)
-        // ---------------------------------------------------------
-        async function showLeaderboard() {
-            showScreen('screen-leaderboard');
-            const tbody = document.getElementById('leaderboardBody');
-            tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-gray-500">جاري التحميل...</td></tr>`;
-            
-            let data = [];
-            if(db !== null) {
-                const snapshot = await db.collection("lamprell_safety_scores").get();
-                snapshot.forEach(doc => data.push(doc.data()));
-            } else {
-                data = JSON.parse(localStorage.getItem('lamprell_logs') || '[]');
-            }
-
-            // ترتيب: الأعلى درجة، ثم الأقل وقتاً
-            data.sort((a, b) => b.score - a.score || a.time - b.time);
-
-            tbody.innerHTML = '';
-            if(data.length === 0) tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-gray-500">لا توجد بيانات حتى الآن</td></tr>`;
-
-            data.slice(0, 10).forEach((entry, index) => { // عرض أول 10 فقط للموظفين
-                const isTop = index === 0 ? 'text-yellow-500 text-xl font-black' : '';
-                tbody.innerHTML += `
-                    <tr class="border-b border-gray-100 hover:bg-gray-50">
-                        <td class="p-3 font-bold ${isTop}">${index + 1}</td>
-                        <td class="p-3 font-bold text-gray-800">${entry.name}</td>
-                        <td class="p-3 text-green-600 font-bold">${entry.score}</td>
-                        <td class="p-3 text-gray-500">${entry.time}s</td>
-                    </tr>
-                `;
-            });
-        }
-
-        // ---------------------------------------------------------
-        // 6. لوحة تحكم المسؤولين (Admin)
-        // ---------------------------------------------------------
-        function verifyAdmin() {
-            const pin = document.getElementById('adminPin').value;
-            if(pin === '12985') {
-                loadAdminDashboard();
-            } else {
-                alert("الرقم السري خاطئ!");
-            }
-        }
-
-        async function loadAdminDashboard() {
-            showScreen('screen-admin-dash');
-            const tbody = document.getElementById('adminTableBody');
-            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-gray-500">جاري تحميل البيانات...</td></tr>`;
-
-            let data = [];
-            if(db !== null) {
-                const snapshot = await db.collection("lamprell_safety_scores").orderBy("date", "desc").get();
-                snapshot.forEach(doc => data.push(doc.data()));
-            } else {
-                data = JSON.parse(localStorage.getItem('lamprell_logs') || '[]');
-                data.sort((a,b) => new Date(b.date) - new Date(a.date)); // الأحدث أولاً
-            }
-
-            tbody.innerHTML = '';
-            data.forEach(entry => {
-                const dateObj = new Date(entry.date);
-                const dateStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
-                const wrongStr = entry.wrongQs && entry.wrongQs.length > 0 ? `الأسئلة: ${entry.wrongQs.join('، ')}` : '<span class="text-green-500">لا يوجد (علامة كاملة)</span>';
-                
-                tbody.innerHTML += `
-                    <tr class="border-b border-gray-200 hover:bg-blue-50">
-                        <td class="p-3 font-bold">${entry.name}</td>
-                        <td class="p-3 font-bold ${entry.score > 4 ? 'text-green-600' : 'text-red-600'}">${entry.score} / 7</td>
-                        <td class="p-3">${entry.time}</td>
-                        <td class="p-3 text-gray-500 text-xs">${dateStr}</td>
-                        <td class="p-3 text-red-500 text-xs font-bold">${wrongStr}</td>
-                    </tr>
-                `;
-            });
-        }
-    </script>
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
 </body>
 </html>
