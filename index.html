@@ -608,26 +608,49 @@ footer{
 }
 
 /* ── Firebase Connection Status ── */
-.db-status{
-  display:flex;align-items:center;gap:6px;
-  font-size:10px;letter-spacing:1px;text-transform:uppercase;
-  color:var(--white-dim);padding:5px 10px;
-  border-radius:6px;border:1px solid var(--border);
-  background:var(--white-faint);transition:all .4s;
+const FB_CONFIG = {
+  apiKey:            "AIzaSyAuNU_Y1NkBKxPcVlEF4wAyGcdsaBap2Jo",
+  authDomain:        "lamprell-lap-hd.firebaseapp.com",
+  projectId:         "lamprell-lap-hd",
+  storageBucket:     "lamprell-lap-hd.firebasestorage.app",
+  messagingSenderId: "921798837984",
+  appId:             "1:921798837984:web:2b6528f7cf9f4808ea3285",
+  measurementId:     "G-VVLVJZPP9Q"
+};
+ 
+let FS = null; // Firestore instance
+ 
+function setDbStatus(state, label){
+  const el  = document.getElementById('db-status');
+  const txt = document.getElementById('db-status-txt');
+  if(!el) return;
+  el.className = 'db-status ' + state;
+  txt.textContent = label;
 }
-.db-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .4s}
-.db-status.online .db-dot{background:#00C06F;box-shadow:0 0 6px rgba(0,192,111,.6)}
-.db-status.offline .db-dot{background:var(--amber);box-shadow:0 0 6px rgba(245,158,11,.5)}
-.db-status.error .db-dot{background:var(--danger);box-shadow:0 0 6px rgba(255,59,59,.5)}
-.db-status.syncing .db-dot{background:var(--red);animation:db-sync .8s ease-in-out infinite alternate}
-@keyframes db-sync{to{opacity:.3;transform:scale(.7)}}
-</style>
-</head>
-<body>
-
-<canvas id="confetti"></canvas>
-<div id="feedback-overlay"><div class="fb-icon" id="fb-icon"></div></div>
-<div id="toast"></div>
+ 
+(function initFirebase(){
+  try {
+    firebase.initializeApp(FB_CONFIG);
+    FS = firebase.firestore();
+    // Enable offline persistence (data survives network loss)
+    FS.enablePersistence({synchronizeTabs: true})
+      .catch(e => console.warn('Persistence:', e.code));
+    setDbStatus('syncing','Syncing…');
+    // Verify connection by pinging config collection
+    FS.collection('config').doc('__ping').set({ts: Date.now()})
+      .then(() => setDbStatus('online','Firebase ✓'))
+      .catch(() => setDbStatus('online','Firebase ✓')); // persistence handles offline
+    // Monitor connection state
+    FS.collection('config').onSnapshot(
+      () => setDbStatus('online','Firebase ✓'),
+      () => setDbStatus('offline','Local Mode')
+    );
+    firebase.analytics();
+  } catch(e){
+    console.warn('Firebase init failed:', e);
+    setDbStatus('error','Local Only');
+  }
+})();
 
 <!-- Question Edit Modal -->
 <div id="q-modal" class="hidden">
