@@ -7,10 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<!-- Firebase Compat SDK v10 -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════
    DESIGN SYSTEM — LAMPRELL ENTERPRISE
@@ -606,51 +602,13 @@ footer{
   header{padding:0 16px}
   .brand-sub,.brand-divider{display:none}
 }
+</style>
+</head>
+<body>
 
-/* ── Firebase Connection Status ── */
-const FB_CONFIG = {
-  apiKey:            "AIzaSyAuNU_Y1NkBKxPcVlEF4wAyGcdsaBap2Jo",
-  authDomain:        "lamprell-lap-hd.firebaseapp.com",
-  projectId:         "lamprell-lap-hd",
-  storageBucket:     "lamprell-lap-hd.firebasestorage.app",
-  messagingSenderId: "921798837984",
-  appId:             "1:921798837984:web:2b6528f7cf9f4808ea3285",
-  measurementId:     "G-VVLVJZPP9Q"
-};
- 
-let FS = null; // Firestore instance
- 
-function setDbStatus(state, label){
-  const el  = document.getElementById('db-status');
-  const txt = document.getElementById('db-status-txt');
-  if(!el) return;
-  el.className = 'db-status ' + state;
-  txt.textContent = label;
-}
- 
-(function initFirebase(){
-  try {
-    firebase.initializeApp(FB_CONFIG);
-    FS = firebase.firestore();
-    // Enable offline persistence (data survives network loss)
-    FS.enablePersistence({synchronizeTabs: true})
-      .catch(e => console.warn('Persistence:', e.code));
-    setDbStatus('syncing','Syncing…');
-    // Verify connection by pinging config collection
-    FS.collection('config').doc('__ping').set({ts: Date.now()})
-      .then(() => setDbStatus('online','Firebase ✓'))
-      .catch(() => setDbStatus('online','Firebase ✓')); // persistence handles offline
-    // Monitor connection state
-    FS.collection('config').onSnapshot(
-      () => setDbStatus('online','Firebase ✓'),
-      () => setDbStatus('offline','Local Mode')
-    );
-    firebase.analytics();
-  } catch(e){
-    console.warn('Firebase init failed:', e);
-    setDbStatus('error','Local Only');
-  }
-})();
+<canvas id="confetti"></canvas>
+<div id="feedback-overlay"><div class="fb-icon" id="fb-icon"></div></div>
+<div id="toast"></div>
 
 <!-- Question Edit Modal -->
 <div id="q-modal" class="hidden">
@@ -690,10 +648,6 @@ function setDbStatus(state, label){
     <div class="hdr-badge">HSE</div>
   </div>
   <div class="hdr-right">
-    <div class="db-status offline" id="db-status" title="Firebase Database">
-      <div class="db-dot"></div>
-      <span id="db-status-txt">Offline</span>
-    </div>
     <select id="langSel" onchange="setLang(this.value)">
       <option value="ar">🇸🇦 العربية</option>
       <option value="en">🇬🇧 English</option>
@@ -921,54 +875,7 @@ function setDbStatus(state, label){
 
 <script>
 /* ═══════════════════════════════════════════════════════════
-   FIREBASE — Primary Cloud Database
-═══════════════════════════════════════════════════════════ */
-const FB_CONFIG = {
-  apiKey:            "AIzaSyAuNU_Y1NkBKxPcVlEF4wAyGcdsaBap2Jo",
-  authDomain:        "lamprell-lap-hd.firebaseapp.com",
-  projectId:         "lamprell-lap-hd",
-  storageBucket:     "lamprell-lap-hd.firebasestorage.app",
-  messagingSenderId: "921798837984",
-  appId:             "1:921798837984:web:2b6528f7cf9f4808ea3285",
-  measurementId:     "G-VVLVJZPP9Q"
-};
-
-let FS = null; // Firestore instance
-
-function setDbStatus(state, label){
-  const el  = document.getElementById('db-status');
-  const txt = document.getElementById('db-status-txt');
-  if(!el) return;
-  el.className = 'db-status ' + state;
-  txt.textContent = label;
-}
-
-(function initFirebase(){
-  try {
-    firebase.initializeApp(FB_CONFIG);
-    FS = firebase.firestore();
-    // Enable offline persistence (data survives network loss)
-    FS.enablePersistence({synchronizeTabs: true})
-      .catch(e => console.warn('Persistence:', e.code));
-    setDbStatus('syncing','Syncing…');
-    // Verify connection by pinging config collection
-    FS.collection('config').doc('__ping').set({ts: Date.now()})
-      .then(() => setDbStatus('online','Firebase ✓'))
-      .catch(() => setDbStatus('online','Firebase ✓')); // persistence handles offline
-    // Monitor connection state
-    FS.collection('config').onSnapshot(
-      () => setDbStatus('online','Firebase ✓'),
-      () => setDbStatus('offline','Local Mode')
-    );
-    firebase.analytics();
-  } catch(e){
-    console.warn('Firebase init failed:', e);
-    setDbStatus('error','Local Only');
-  }
-})();
-
-/* ═══════════════════════════════════════════════════════════
-   INDEXEDDB — Local Cache + Offline Fallback
+   DATABASE — IndexedDB + localStorage fallback
 ═══════════════════════════════════════════════════════════ */
 const IDB = {
   db: null,
@@ -1021,6 +928,12 @@ const IDB = {
       req.onerror   = () => res(null);
     });
   },
+  del(store, key) {
+    return new Promise(res => {
+      const req = IDB.tx(store,'readwrite').delete(key);
+      req.onsuccess = () => res(); req.onerror = () => res();
+    });
+  },
   clear(store) {
     return new Promise(res => {
       const req = IDB.tx(store,'readwrite').clear();
@@ -1029,109 +942,36 @@ const IDB = {
   }
 };
 
-// LocalStorage fallback helpers
+// LS fallback helpers
 function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
 function lsPut(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 
-/* ═══════════════════════════════════════════════════════════
-   HYBRID DB FUNCTIONS — Firebase primary, IDB cache
-═══════════════════════════════════════════════════════════ */
-
-// SCORES
 async function dbSaveScore(r) {
-  setDbStatus('syncing','Saving…');
-  // Firebase first
-  if (FS) {
-    try {
-      const ref = await FS.collection('scores').add(r);
-      r.firebaseId = ref.id;
-      setDbStatus('online','Firebase ✓');
-    } catch(e) {
-      console.warn('FS save error:', e);
-      setDbStatus('offline','Local Mode');
-    }
-  }
-  // Also write to IDB local cache
-  if (IDB.db) {
-    try { await IDB.add('scores', {...r}); } catch(e){}
-  } else {
-    const d = lsGet('scores')||[]; r.id = r.id||Date.now(); d.push(r); lsPut('scores',d);
-  }
+  if (IDB.db) return IDB.add('scores', r);
+  const d = lsGet('scores')||[]; r.id=Date.now(); d.push(r); lsPut('scores',d);
 }
-
 async function dbGetScores() {
-  // Try Firebase (includes offline cache thanks to persistence)
-  if (FS) {
-    try {
-      const snap = await FS.collection('scores').orderBy('date','desc').get();
-      if (!snap.empty) return snap.docs.map(d => ({...d.data(), id: d.id}));
-    } catch(e) {
-      console.warn('FS get scores failed, using local:', e);
-      setDbStatus('offline','Local Mode');
-    }
-  }
-  // IDB fallback
-  if (IDB.db) return IDB.getAll('scores');
-  return lsGet('scores') || [];
+  return IDB.db ? IDB.getAll('scores') : (lsGet('scores')||[]);
 }
-
 async function dbClearScores() {
-  // Clear from Firebase
-  if (FS) {
-    try {
-      const snap  = await FS.collection('scores').get();
-      const batch = FS.batch();
-      snap.docs.forEach(doc => batch.delete(doc.ref));
-      await batch.commit();
-    } catch(e) { console.warn('FS clear error:', e); }
-  }
-  // Clear local cache
-  if (IDB.db) await IDB.clear('scores');
-  else lsPut('scores', []);
+  if (IDB.db) return IDB.clear('scores');
+  lsPut('scores',[]);
 }
-
-// QUESTION SETS
 async function dbSaveQset(qs) {
-  if (FS) {
-    try {
-      await FS.collection('qsets').doc(qs.id).set(qs);
-    } catch(e) { console.warn('FS qset save error:', e); }
-  }
-  if (IDB.db) await IDB.put('qsets', qs);
-  else { const d = lsGet('qsets')||{}; d[qs.id]=qs; lsPut('qsets',d); }
+  if (IDB.db) return IDB.put('qsets', qs);
+  const d = lsGet('qsets')||{}; d[qs.id]=qs; lsPut('qsets',d);
 }
-
 async function dbGetQsets() {
-  if (FS) {
-    try {
-      const snap = await FS.collection('qsets').get();
-      if (!snap.empty) return snap.docs.map(d => d.data());
-    } catch(e) { console.warn('FS qsets get failed:', e); }
-  }
   if (IDB.db) return IDB.getAll('qsets');
   const d = lsGet('qsets')||{}; return Object.values(d);
 }
-
-// CONFIG
 async function dbGetCfg(k) {
-  if (FS) {
-    try {
-      const doc = await FS.collection('config').doc(k).get();
-      if (doc.exists) return doc.data().val;
-    } catch(e) { console.warn('FS config get failed:', e); }
-  }
-  if (IDB.db) { const r = await IDB.get('config', k); return r ? r.val : null; }
+  if (IDB.db) { const r = await IDB.get('config',k); return r ? r.val : null; }
   return lsGet('cfg_'+k);
 }
-
 async function dbSetCfg(k, v) {
-  if (FS) {
-    try {
-      await FS.collection('config').doc(k).set({key: k, val: v});
-    } catch(e) { console.warn('FS config save error:', e); }
-  }
-  if (IDB.db) await IDB.put('config', {key: k, val: v});
-  else lsPut('cfg_'+k, v);
+  if (IDB.db) return IDB.put('config',{key:k, val:v});
+  lsPut('cfg_'+k, v);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1921,6 +1761,220 @@ function toast(msg, type=''){
   el._t = setTimeout(()=>el.className='',3000);
 }
 
+   /* ═══════════════════════════════════════════════════════════
+   FIREBASE — Primary Cloud Database
+═══════════════════════════════════════════════════════════ */
+const FB_CONFIG = {
+  apiKey:            "AIzaSyAuNU_Y1NkBKxPcVlEF4wAyGcdsaBap2Jo",
+  authDomain:        "lamprell-lap-hd.firebaseapp.com",
+  projectId:         "lamprell-lap-hd",
+  storageBucket:     "lamprell-lap-hd.firebasestorage.app",
+  messagingSenderId: "921798837984",
+  appId:             "1:921798837984:web:2b6528f7cf9f4808ea3285",
+  measurementId:     "G-VVLVJZPP9Q"
+};
+ 
+let FS = null; // Firestore instance
+ 
+function setDbStatus(state, label){
+  const el  = document.getElementById('db-status');
+  const txt = document.getElementById('db-status-txt');
+  if(!el) return;
+  el.className = 'db-status ' + state;
+  txt.textContent = label;
+}
+ 
+(function initFirebase(){
+  try {
+    firebase.initializeApp(FB_CONFIG);
+    FS = firebase.firestore();
+    // Enable offline persistence (data survives network loss)
+    FS.enablePersistence({synchronizeTabs: true})
+      .catch(e => console.warn('Persistence:', e.code));
+    setDbStatus('syncing','Syncing…');
+    // Verify connection by pinging config collection
+    FS.collection('config').doc('__ping').set({ts: Date.now()})
+      .then(() => setDbStatus('online','Firebase ✓'))
+      .catch(() => setDbStatus('online','Firebase ✓')); // persistence handles offline
+    // Monitor connection state
+    FS.collection('config').onSnapshot(
+      () => setDbStatus('online','Firebase ✓'),
+      () => setDbStatus('offline','Local Mode')
+    );
+    firebase.analytics();
+  } catch(e){
+    console.warn('Firebase init failed:', e);
+    setDbStatus('error','Local Only');
+  }
+})();
+ 
+/* ═══════════════════════════════════════════════════════════
+   INDEXEDDB — Local Cache + Offline Fallback
+═══════════════════════════════════════════════════════════ */
+const IDB = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open('lamprell_hse_v3', 3);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('scores')) {
+          const s = db.createObjectStore('scores', {keyPath:'id',autoIncrement:true});
+          s.createIndex('date','date'); s.createIndex('score','score');
+        }
+        if (!db.objectStoreNames.contains('qsets')) {
+          db.createObjectStore('qsets', {keyPath:'id'});
+        }
+        if (!db.objectStoreNames.contains('config')) {
+          db.createObjectStore('config', {keyPath:'key'});
+        }
+      };
+      req.onsuccess = e => { IDB.db = e.target.result; res(IDB.db); };
+      req.onerror   = () => { console.warn('IDB unavailable'); res(null); };
+    });
+  },
+  tx(store, mode='readonly') { return IDB.db.transaction(store, mode).objectStore(store); },
+  put(store, val) {
+    return new Promise((res,rej) => {
+      const req = IDB.tx(store,'readwrite').put(val);
+      req.onsuccess = () => res(req.result);
+      req.onerror   = () => rej(req.error);
+    });
+  },
+  add(store, val) {
+    return new Promise((res,rej) => {
+      const req = IDB.tx(store,'readwrite').add(val);
+      req.onsuccess = () => res(req.result);
+      req.onerror   = () => rej(req.error);
+    });
+  },
+  getAll(store) {
+    return new Promise(res => {
+      const req = IDB.tx(store).getAll();
+      req.onsuccess = () => res(req.result||[]);
+      req.onerror   = () => res([]);
+    });
+  },
+  get(store, key) {
+    return new Promise(res => {
+      const req = IDB.tx(store).get(key);
+      req.onsuccess = () => res(req.result||null);
+      req.onerror   = () => res(null);
+    });
+  },
+  clear(store) {
+    return new Promise(res => {
+      const req = IDB.tx(store,'readwrite').clear();
+      req.onsuccess = () => res(); req.onerror = () => res();
+    });
+  }
+};
+ 
+// LocalStorage fallback helpers
+function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
+function lsPut(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+ 
+/* ═══════════════════════════════════════════════════════════
+   HYBRID DB FUNCTIONS — Firebase primary, IDB cache
+═══════════════════════════════════════════════════════════ */
+ 
+// SCORES
+async function dbSaveScore(r) {
+  setDbStatus('syncing','Saving…');
+  // Firebase first
+  if (FS) {
+    try {
+      const ref = await FS.collection('scores').add(r);
+      r.firebaseId = ref.id;
+      setDbStatus('online','Firebase ✓');
+    } catch(e) {
+      console.warn('FS save error:', e);
+      setDbStatus('offline','Local Mode');
+    }
+  }
+  // Also write to IDB local cache
+  if (IDB.db) {
+    try { await IDB.add('scores', {...r}); } catch(e){}
+  } else {
+    const d = lsGet('scores')||[]; r.id = r.id||Date.now(); d.push(r); lsPut('scores',d);
+  }
+}
+ 
+async function dbGetScores() {
+  // Try Firebase (includes offline cache thanks to persistence)
+  if (FS) {
+    try {
+      const snap = await FS.collection('scores').orderBy('date','desc').get();
+      if (!snap.empty) return snap.docs.map(d => ({...d.data(), id: d.id}));
+    } catch(e) {
+      console.warn('FS get scores failed, using local:', e);
+      setDbStatus('offline','Local Mode');
+    }
+  }
+  // IDB fallback
+  if (IDB.db) return IDB.getAll('scores');
+  return lsGet('scores') || [];
+}
+ 
+async function dbClearScores() {
+  // Clear from Firebase
+  if (FS) {
+    try {
+      const snap  = await FS.collection('scores').get();
+      const batch = FS.batch();
+      snap.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    } catch(e) { console.warn('FS clear error:', e); }
+  }
+  // Clear local cache
+  if (IDB.db) await IDB.clear('scores');
+  else lsPut('scores', []);
+}
+ 
+// QUESTION SETS
+async function dbSaveQset(qs) {
+  if (FS) {
+    try {
+      await FS.collection('qsets').doc(qs.id).set(qs);
+    } catch(e) { console.warn('FS qset save error:', e); }
+  }
+  if (IDB.db) await IDB.put('qsets', qs);
+  else { const d = lsGet('qsets')||{}; d[qs.id]=qs; lsPut('qsets',d); }
+}
+ 
+async function dbGetQsets() {
+  if (FS) {
+    try {
+      const snap = await FS.collection('qsets').get();
+      if (!snap.empty) return snap.docs.map(d => d.data());
+    } catch(e) { console.warn('FS qsets get failed:', e); }
+  }
+  if (IDB.db) return IDB.getAll('qsets');
+  const d = lsGet('qsets')||{}; return Object.values(d);
+}
+ 
+// CONFIG
+async function dbGetCfg(k) {
+  if (FS) {
+    try {
+      const doc = await FS.collection('config').doc(k).get();
+      if (doc.exists) return doc.data().val;
+    } catch(e) { console.warn('FS config get failed:', e); }
+  }
+  if (IDB.db) { const r = await IDB.get('config', k); return r ? r.val : null; }
+  return lsGet('cfg_'+k);
+}
+ 
+async function dbSetCfg(k, v) {
+  if (FS) {
+    try {
+      await FS.collection('config').doc(k).set({key: k, val: v});
+    } catch(e) { console.warn('FS config save error:', e); }
+  }
+  if (IDB.db) await IDB.put('config', {key: k, val: v});
+  else lsPut('cfg_'+k, v);
+}
+ 
 /* ═══════════════════════════════════════════════════════════
    UTILS
 ═══════════════════════════════════════════════════════════ */
