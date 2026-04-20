@@ -963,56 +963,6 @@ const IDB = {
 function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
 function lsPut(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 
-// ─────────────────────────────────────────────────────
-// FIREBASE — lamprell-lap-hd (background only, never blocks UI)
-// ─────────────────────────────────────────────────────
-let FS = null;
-(function initFirebase(){
-  try {
-    const cfg_fb = {
-      apiKey:            "AIzaSyAuNU_Y1NkBKxPcVlEF4wAyGcdsaBap2Jo",
-      authDomain:        "lamprell-lap-hd.firebaseapp.com",
-      projectId:         "lamprell-lap-hd",
-      storageBucket:     "lamprell-lap-hd.firebasestorage.app",
-      messagingSenderId: "921798837984",
-      appId:             "1:921798837984:web:2b6528f7cf9f4808ea3285",
-      measurementId:     "G-VVLVJZPP9Q"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(cfg_fb);
-    FS = firebase.firestore();
-    // Offline persistence — errors silently (multi-tab or already enabled)
-    FS.enablePersistence({synchronizeTabs:true}).catch(()=>{});
-    // Analytics non-blocking
-    try { firebase.analytics(); } catch(e){}
-    // Background connection check — updates the status pill
-    setTimeout(()=>{
-      setDbPill('syncing','Connecting…');
-      FS.collection('_status').doc('ping').set({t:Date.now()})
-        .then(()=>setDbPill('cloud','Cloud ✓'))
-        .catch(()=>setDbPill('local','Local Mode'));
-    }, 800);
-  } catch(e){
-    console.warn('[Firebase init]', e.message);
-    FS = null;
-    setDbPill('local','Local Mode');
-  }
-})();
-
-function setDbPill(state, label){
-  const p=document.getElementById('db-pill');
-  const t=document.getElementById('db-txt');
-  if(p) p.className='db-pill '+state;
-  if(t) t.textContent=label;
-}
-
-// ─────────────────────────────────────────────────────
-// DB HYBRID FUNCTIONS
-// Rule: IDB/LS always first (instant, never fails)
-//       Firebase saves in background (never blocks)
-//       Firebase reads for leaderboard (all users' data)
-// ─────────────────────────────────────────────────────
-
-async function dbSaveScore(r) {
   // 1. Save locally first — instant, app never waits
   if (IDB.db) {
     try { await IDB.add('scores', {...r}); } catch(e){}
