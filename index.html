@@ -7,10 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<!-- Firebase Compat SDK v10 — lamprell-lap-hd -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════
    DESIGN SYSTEM — LAMPRELL ENTERPRISE
@@ -607,15 +603,17 @@ footer{
   .brand-sub,.brand-divider{display:none}
 }
 
-/* ── Firebase / DB Connection Status ── */
-.db-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--white-faint);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--white-dim);user-select:none;cursor:default;transition:all .4s}
-.db-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:all .4s}
-.db-pill.cloud  .db-dot{background:var(--green);box-shadow:0 0 6px rgba(0,192,111,.8)}
-.db-pill.syncing .db-dot{background:var(--red);animation:dbpulse .7s ease-in-out infinite alternate}
-.db-pill.local  .db-dot{background:var(--amber)}
-.db-pill.error  .db-dot{background:var(--danger)}
-@keyframes dbpulse{to{opacity:.15;transform:scale(.55)}}
+/* ── Supabase Connection Status ── */
+.db-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--white-faint);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--white-dim);user-select:none;cursor:default;white-space:nowrap}
+.db-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .4s}
+.db-pill.cloud   .db-dot{background:var(--green);box-shadow:0 0 7px rgba(0,192,111,.9)}
+.db-pill.syncing .db-dot{background:var(--red);animation:dbpulse .65s ease-in-out infinite alternate}
+.db-pill.local   .db-dot{background:var(--amber)}
+.db-pill.error   .db-dot{background:var(--danger)}
+@keyframes dbpulse{to{opacity:.15;transform:scale(.5)}}
 </style>
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -662,7 +660,7 @@ footer{
   </div>
   <div class="hdr-right">
     <div class="db-pill local" id="db-pill">
-      <div class="db-dot"></div><span id="db-txt">Local</span>
+      <div class="db-dot"></div><span id="db-txt">Connecting…</span>
     </div>
     <select id="langSel" onchange="setLang(this.value)">
       <option value="ar">🇸🇦 العربية</option>
@@ -879,6 +877,97 @@ footer{
       <button class="btn btn-red" style="width:auto;padding:12px 28px" onclick="saveConfig()">💾 حفظ الإعدادات</button>
     </div>
 
+    <!-- ─── Supabase Cloud Connection ─── -->
+    <div style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div class="db-pill" id="sb-status-pill" style="pointer-events:none">
+          <div class="db-dot"></div><span id="sb-status-txt">Not configured</span>
+        </div>
+        <div style="font-size:11px;color:var(--red);letter-spacing:1.5px;text-transform:uppercase;font-weight:700">
+          ⚡ Supabase — Cloud Database
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:700px;margin-bottom:14px">
+        <div class="form-group">
+          <label class="form-label">Project URL</label>
+          <input class="form-input" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Anon Public Key</label>
+          <input class="form-input" id="sb-key" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+        <button class="btn btn-red btn-sm" onclick="saveSbConfig()" style="padding:10px 20px">
+          ⚡ حفظ وتوصيل
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="testSbConnection()" style="padding:10px 20px">
+          🔗 اختبار الاتصال
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="syncOfflineScores()" style="padding:10px 18px">
+          ☁️ رفع البيانات المحلية
+        </button>
+      </div>
+
+      <div style="padding:16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:12px;color:var(--white-dim);line-height:1.9">
+        <strong style="color:var(--amber)">📋 خطوات الإعداد (مرة واحدة — 5 دقائق):</strong><br>
+        ① اذهب لـ <strong style="color:var(--white)">supabase.com</strong> وأنشئ حساباً مجانياً<br>
+        ② أنشئ مشروعاً جديداً (New Project)<br>
+        ③ من القائمة: افتح <strong style="color:var(--white)">SQL Editor → New Query</strong><br>
+        ④ انسخ الـ SQL من الأسفل والصقه واضغط <strong style="color:var(--white)">Run</strong><br>
+        ⑤ افتح <strong style="color:var(--white)">Settings → API</strong> وانسخ <em>Project URL</em> و <em>anon public key</em><br>
+        ⑥ الصقهما في الحقول أعلاه واضغط "حفظ وتوصيل" ✅
+      </div>
+
+      <details style="margin-top:14px">
+        <summary style="cursor:pointer;font-size:12px;color:var(--red);letter-spacing:1px;text-transform:uppercase;padding:8px 0;user-select:none">
+          📄 عرض كود SQL — انسخه في Supabase SQL Editor
+        </summary>
+        <pre style="margin-top:10px;padding:18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--white-dim);overflow-x:auto;line-height:1.75;white-space:pre-wrap">-- Lamprell HSE Portal — Supabase Schema
+-- ══════════════════════════════════════
+-- Run in: Supabase → SQL Editor → New Query → Run
+
+-- 1. Quiz results (shared across all devices)
+create table if not exists scores (
+  id          uuid default gen_random_uuid() primary key,
+  name        text not null,
+  dept        text default '',
+  score       int  not null default 0,
+  accuracy    int  default 0,
+  time_sec    int  default 0,
+  wrong_qs    text default '[]',
+  lang        text default 'ar',
+  qset        text default 'general',
+  created_at  timestamptz default now()
+);
+create index if not exists idx_scores_date  on scores (created_at desc);
+create index if not exists idx_scores_score on scores (score desc);
+
+-- 2. Question sets (admin-configurable)
+create table if not exists qsets (
+  id    text primary key,
+  data  text not null
+);
+
+-- 3. App config (colors, company name, etc.)
+create table if not exists config (
+  key   text primary key,
+  val   text not null
+);
+
+-- 4. RLS Policies — allow public read/write (no auth needed)
+alter table scores enable row level security;
+alter table qsets  enable row level security;
+alter table config enable row level security;
+
+create policy "allow_all_scores" on scores for all to anon using (true) with check (true);
+create policy "allow_all_qsets"  on qsets  for all to anon using (true) with check (true);
+create policy "allow_all_config" on config for all to anon using (true) with check (true);</pre>
+      </details>
+    </div>
+
   </div>
 </div>
 
@@ -890,154 +979,164 @@ footer{
 </footer>
 
 <script>
-/* ═══════════════════════════════════════════════════════════
-   DATABASE — IndexedDB + localStorage fallback
-═══════════════════════════════════════════════════════════ */
-const IDB = {
-  db: null,
-  open() {
-    return new Promise((res, rej) => {
-      const req = indexedDB.open('lamprell_hse_v3', 3);
-      req.onupgradeneeded = e => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains('scores')) {
-          const s = db.createObjectStore('scores', {keyPath:'id',autoIncrement:true});
-          s.createIndex('date','date'); s.createIndex('score','score');
-        }
-        if (!db.objectStoreNames.contains('qsets')) {
-          db.createObjectStore('qsets', {keyPath:'id'});
-        }
-        if (!db.objectStoreNames.contains('config')) {
-          db.createObjectStore('config', {keyPath:'key'});
-        }
-      };
-      req.onsuccess = e => { IDB.db = e.target.result; res(IDB.db); };
-      req.onerror   = () => { console.warn('IDB unavailable'); res(null); };
-    });
-  },
-  tx(store, mode='readonly') { return IDB.db.transaction(store, mode).objectStore(store); },
-  put(store, val) {
-    return new Promise((res,rej) => {
-      const req = IDB.tx(store,'readwrite').put(val);
-      req.onsuccess = () => res(req.result);
-      req.onerror   = () => rej(req.error);
-    });
-  },
-  add(store, val) {
-    return new Promise((res,rej) => {
-      const req = IDB.tx(store,'readwrite').add(val);
-      req.onsuccess = () => res(req.result);
-      req.onerror   = () => rej(req.error);
-    });
-  },
-  getAll(store) {
-    return new Promise(res => {
-      const req = IDB.tx(store).getAll();
-      req.onsuccess = () => res(req.result||[]);
-      req.onerror   = () => res([]);
-    });
-  },
-  get(store, key) {
-    return new Promise(res => {
-      const req = IDB.tx(store).get(key);
-      req.onsuccess = () => res(req.result||null);
-      req.onerror   = () => res(null);
-    });
-  },
-  del(store, key) {
-    return new Promise(res => {
-      const req = IDB.tx(store,'readwrite').delete(key);
-      req.onsuccess = () => res(); req.onerror = () => res();
-    });
-  },
-  clear(store) {
-    return new Promise(res => {
-      const req = IDB.tx(store,'readwrite').clear();
-      req.onsuccess = () => res(); req.onerror = () => res();
-    });
-  }
-};
+/* ═══════════════════════════════════════════════════════════════
+   SUPABASE — Single source of truth for all devices
+   Setup: Admin Panel → Settings → Supabase
+   Docs:  supabase.com/docs
+═══════════════════════════════════════════════════════════════ */
 
-// ─────────────────────────────────────────────────────
-// LS fallback
+// localStorage helpers (used ONLY for Supabase credentials + offline qsets/config)
 function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
 function lsPut(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 
-  // 1. Save locally first — instant, app never waits
-  if (IDB.db) {
-    try { await IDB.add('scores', {...r}); } catch(e){}
-  } else {
-    const d=lsGet('scores')||[]; r.id=r.id||Date.now(); d.push(r); lsPut('scores',d);
+// Supabase client — credentials stored in localStorage, set from Admin settings
+let SB = null;
+let SB_READY = false;
+
+function initSupabase(){
+  const url = lsGet('sb_url') || '';
+  const key = lsGet('sb_key') || '';
+  if (!url || !key) { setDbPill('local','Setup Required'); return; }
+  try {
+    SB = window.supabase.createClient(url, key);
+    setDbPill('syncing','Connecting…');
+    // Background ping to confirm connection
+    SB.from('scores').select('id', {count:'exact',head:true})
+      .then(({ error }) => {
+        if (error) { setDbPill('error','Connection Failed'); console.warn('[SB]', error.message); }
+        else        { SB_READY = true; setDbPill('cloud','Cloud ✓'); }
+      });
+  } catch(e) {
+    console.warn('[SB init]', e.message);
+    setDbPill('error','Init Error');
   }
-  // 2. Background sync to Firebase — fire-and-forget
-  if (FS) {
-    FS.collection('scores').add(r)
-      .then(()=>setDbPill('cloud','Cloud ✓'))
-      .catch(()=>setDbPill('local','Offline – saved locally'));
+}
+
+function setDbPill(state, label){
+  const p = document.getElementById('db-pill');
+  const t = document.getElementById('db-txt');
+  if (p) p.className = 'db-pill ' + state;
+  if (t) t.textContent = label;
+}
+
+// Run init after DOM loads
+setTimeout(initSupabase, 300);
+
+/* ═══════════════════════════════════════════════════════════════
+   DATABASE API — Supabase primary, localStorage offline fallback
+═══════════════════════════════════════════════════════════════ */
+
+// ── SCORES ──────────────────────────────────────────────────────
+async function dbSaveScore(r) {
+  if (SB_READY) {
+    const { error } = await SB.from('scores').insert([{
+      name:       r.name,
+      dept:       r.dept        || '',
+      score:      r.score,
+      accuracy:   r.accuracy    || 0,
+      time_sec:   r.time,
+      wrong_qs:   JSON.stringify(r.wrongQs || []),
+      lang:       r.lang        || 'ar',
+      qset:       r.qset        || 'general',
+      created_at: r.date        || new Date().toISOString()
+    }]);
+    if (error) {
+      console.warn('[SB saveScore]', error.message);
+      setDbPill('error', 'Save Failed');
+    } else {
+      setDbPill('cloud', 'Saved ✓');
+      setTimeout(()=>setDbPill('cloud','Cloud ✓'), 2000);
+    }
+  } else {
+    // Offline fallback — save locally
+    const d = lsGet('scores_offline') || [];
+    d.push({...r, id: Date.now()});
+    lsPut('scores_offline', d);
+    setDbPill('local', 'Saved Locally');
   }
 }
 
 async function dbGetScores() {
-  // Prefer Firebase (has all users + offline cache via persistence)
-  if (FS) {
-    try {
-      const snap = await FS.collection('scores').orderBy('date','desc').get();
-      if(!snap.empty) return snap.docs.map(d=>({...d.data(), id:d.id}));
-    } catch(e){ /* fall through to local */ }
+  if (SB_READY) {
+    const { data, error } = await SB
+      .from('scores')
+      .select('*')
+      .order('score', { ascending: false })
+      .order('time_sec', { ascending: true })
+      .limit(500);
+    if (!error && data) {
+      return data.map(r => ({
+        id:       r.id,
+        name:     r.name,
+        dept:     r.dept       || '',
+        score:    r.score,
+        accuracy: r.accuracy   || 0,
+        time:     r.time_sec,
+        wrongQs:  (() => { try { return JSON.parse(r.wrong_qs||'[]'); } catch(e){ return []; } })(),
+        lang:     r.lang       || 'ar',
+        qset:     r.qset       || 'general',
+        date:     r.created_at
+      }));
+    }
+    if (error) console.warn('[SB getScores]', error.message);
   }
-  // Local fallback
-  if (IDB.db) return IDB.getAll('scores');
-  return lsGet('scores')||[];
+  // Offline fallback
+  return (lsGet('scores_offline') || []).reverse();
 }
 
 async function dbClearScores() {
-  // Firebase batch delete
-  if (FS) {
-    try {
-      const snap=await FS.collection('scores').get();
-      const batch=FS.batch();
-      snap.docs.forEach(doc=>batch.delete(doc.ref));
-      await batch.commit();
-    } catch(e){}
+  if (SB_READY) {
+    const { error } = await SB.from('scores').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) console.warn('[SB clearScores]', error.message);
   }
-  if (IDB.db) await IDB.clear('scores');
-  else lsPut('scores',[]);
+  lsPut('scores_offline', []);
 }
 
+// ── QUESTION SETS ────────────────────────────────────────────────
 async function dbSaveQset(qs) {
-  // Local first
-  if (IDB.db) { try { await IDB.put('qsets', qs); } catch(e){} }
-  else { const d=lsGet('qsets')||{}; d[qs.id]=qs; lsPut('qsets',d); }
-  // Background Firebase sync
-  if (FS) FS.collection('qsets').doc(qs.id).set(qs).catch(()=>{});
+  // Always save locally for offline access
+  const local = lsGet('qsets') || {};
+  local[qs.id] = qs;
+  lsPut('qsets', local);
+  // Sync to Supabase
+  if (SB_READY) {
+    const payload = { id: qs.id, data: JSON.stringify(qs) };
+    const { error } = await SB.from('qsets').upsert([payload], { onConflict: 'id' });
+    if (error) console.warn('[SB saveQset]', error.message);
+  }
 }
 
 async function dbGetQsets() {
-  if (FS) {
-    try {
-      const snap=await FS.collection('qsets').get();
-      if(!snap.empty) return snap.docs.map(d=>d.data());
-    } catch(e){}
+  if (SB_READY) {
+    const { data, error } = await SB.from('qsets').select('*');
+    if (!error && data && data.length) {
+      return data.map(r => { try { return JSON.parse(r.data); } catch(e){ return null; } }).filter(Boolean);
+    }
+    if (error) console.warn('[SB getQsets]', error.message);
   }
-  if (IDB.db) return IDB.getAll('qsets');
-  const d=lsGet('qsets')||{}; return Object.values(d);
+  // Local fallback
+  const d = lsGet('qsets') || {};
+  return Object.values(d);
 }
 
+// ── CONFIG ───────────────────────────────────────────────────────
 async function dbGetCfg(k) {
-  if (FS) {
-    try {
-      const doc=await FS.collection('config').doc(k).get();
-      if(doc.exists) return doc.data().val;
-    } catch(e){}
+  if (SB_READY) {
+    const { data, error } = await SB.from('config').select('val').eq('key', k).single();
+    if (!error && data) {
+      try { return JSON.parse(data.val); } catch(e) { return data.val; }
+    }
   }
-  if (IDB.db) { const r=await IDB.get('config',k); return r?r.val:null; }
-  return lsGet('cfg_'+k);
+  return lsGet('cfg_' + k);
 }
 
 async function dbSetCfg(k, v) {
-  if (IDB.db) { try { await IDB.put('config',{key:k,val:v}); } catch(e){} }
-  else lsPut('cfg_'+k, v);
-  if (FS) FS.collection('config').doc(k).set({key:k,val:v}).catch(()=>{});
+  const valStr = JSON.stringify(v);
+  lsPut('cfg_' + k, v);
+  if (SB_READY) {
+    const { error } = await SB.from('config').upsert([{ key: k, val: valStr }], { onConflict: 'key' });
+    if (error) console.warn('[SB setCfg]', error.message);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1182,7 +1281,7 @@ let qsets=[];
    INIT
 ═══════════════════════════════════════════════════════════ */
 (async()=>{
-  await IDB.open();
+  // No IDB — Supabase only (with localStorage offline fallback)
   await loadConfig();
   await loadQsets();
   populateDepts();
@@ -1587,6 +1686,12 @@ async function loadAdmin(){
   document.getElementById('cfg-color').value   = cfg.color||'#CC0000';
   document.getElementById('cfg-time').value    = cfg.time||10;
   document.getElementById('cfg-depts').value   = (cfg.depts||[]).join(', ');
+  // Pre-fill Supabase fields
+  const _su = document.getElementById('sb-url');
+  const _sk = document.getElementById('sb-key');
+  if (_su) _su.value = lsGet('sb_url') || '';
+  if (_sk) _sk.value = lsGet('sb_key') ? '••••••••••••••••' : '';
+  updateSbStatusPill();
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1816,6 +1921,62 @@ async function clearData(){
 }
 
 function printReport(){ window.print(); }
+
+/* ── Supabase connection management ── */
+async function saveSbConfig(){
+  const url = (document.getElementById('sb-url').value||'').trim().replace(/\/+$/,'');
+  const key = (document.getElementById('sb-key').value||'').trim();
+  if(!url||!key){ toast(lang==='ar'?'الرجاء إدخال URL و Key':'Please enter URL and Key','err'); return; }
+  lsPut('sb_url', url);
+  lsPut('sb_key', key);
+  toast(lang==='ar'?'✓ تم الحفظ — جارٍ الاتصال…':'✓ Saved — connecting…','ok');
+  initSupabase();
+  setTimeout(()=>{ updateSbStatusPill(); }, 2000);
+}
+
+async function testSbConnection(){
+  const url = (document.getElementById('sb-url')?.value||'').trim().replace(/\/+$/,'') || lsGet('sb_url')||'';
+  const key = (document.getElementById('sb-key')?.value||'').trim() || lsGet('sb_key')||'';
+  if(!url||!key){ toast(lang==='ar'?'أدخل URL و Key أولاً':'Enter URL and Key first','err'); return; }
+  lsPut('sb_url',url); lsPut('sb_key',key);
+  initSupabase();
+  setTimeout(async()=>{
+    if(SB_READY){
+      toast(lang==='ar'?'✅ Supabase متصل! البيانات تتزامن بين جميع الأجهزة':'✅ Supabase connected! Data syncs across all devices','ok');
+    } else {
+      toast(lang==='ar'?'❌ فشل الاتصال — تأكد من URL و anon key والـ RLS policies':'❌ Connection failed — check URL, anon key and RLS policies','err');
+    }
+    updateSbStatusPill();
+  }, 2500);
+}
+
+async function syncOfflineScores(){
+  if(!SB_READY){ toast(lang==='ar'?'يجب الاتصال بـ Supabase أولاً':'Connect to Supabase first','err'); return; }
+  const offline = lsGet('scores_offline')||[];
+  if(!offline.length){ toast(lang==='ar'?'لا توجد بيانات محلية للرفع':'No offline data to sync','ok'); return; }
+  let synced=0;
+  for(const r of offline){
+    const {error} = await SB.from('scores').insert([{
+      name: r.name, dept: r.dept||'', score: r.score,
+      accuracy: r.accuracy||0, time_sec: r.time,
+      wrong_qs: JSON.stringify(r.wrongQs||[]),
+      lang: r.lang||'ar', qset: r.qset||'general',
+      created_at: r.date||new Date().toISOString()
+    }]);
+    if(!error) synced++;
+  }
+  lsPut('scores_offline',[]);
+  toast((lang==='ar'?`✓ تم رفع ${synced} سجل للسحابة`:`✓ Synced ${synced} records to cloud`),'ok');
+}
+
+function updateSbStatusPill(){
+  const p = document.getElementById('sb-status-pill');
+  const t = document.getElementById('sb-status-txt');
+  if(!p||!t) return;
+  if(SB_READY){ p.className='db-pill cloud'; t.textContent='Connected ✓'; }
+  else if(lsGet('sb_url')){ p.className='db-pill error'; t.textContent='Not Connected'; }
+  else { p.className='db-pill local'; t.textContent='Not Configured'; }
+}
 
 /* ═══════════════════════════════════════════════════════════
    TOAST
