@@ -603,16 +603,15 @@ footer{
   .brand-sub,.brand-divider{display:none}
 }
 
-/* ── DB Status Pill ── */
-.db-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--white-faint);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--white-dim);user-select:none;white-space:nowrap}
+.db-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;
+  border:1px solid var(--border);background:var(--white-faint);font-size:10px;
+  letter-spacing:1px;text-transform:uppercase;color:var(--white-dim);user-select:none}
 .db-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);flex-shrink:0;transition:all .4s}
 .db-pill.cloud   .db-dot{background:var(--green);box-shadow:0 0 7px rgba(0,192,111,.9)}
 .db-pill.syncing .db-dot{background:var(--red);animation:dbp .6s ease-in-out infinite alternate}
 .db-pill.err     .db-dot{background:var(--danger)}
 @keyframes dbp{to{opacity:.15;transform:scale(.5)}}
 </style>
-<!-- Supabase JS v2 (supports sb_publishable_ keys) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -658,7 +657,7 @@ footer{
     <div class="hdr-badge">HSE</div>
   </div>
   <div class="hdr-right">
-    <div class="db-pill" id="db-pill"><div class="db-dot"></div><span id="db-txt">Local</span></div>
+    <div class="db-pill" id="db-pill"><div class="db-dot"></div><span id="db-txt">Cloud</span></div>
     <select id="langSel" onchange="setLang(this.value)">
       <option value="ar">🇸🇦 العربية</option>
       <option value="en">🇬🇧 English</option>
@@ -873,40 +872,34 @@ footer{
       </div>
       <button class="btn btn-red" style="width:auto;padding:12px 28px" onclick="saveConfig()">💾 حفظ الإعدادات</button>
     </div>
-
-    <!-- Supabase Info Card -->
-    <div style="margin-top:22px;padding:16px 20px;background:rgba(0,192,111,.05);border:1px solid rgba(0,192,111,.18);border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-      <div>
-        <div style="font-size:11px;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:5px">⚡ Supabase Cloud — Active</div>
-        <div style="font-size:12px;color:var(--white-dim);line-height:1.7">
-          البيانات مشتركة بين جميع الأجهزة<br>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(245,245,245,.3)">tpyklldftobwmeqxubig.supabase.co</span>
-        </div>
+    <div style="margin-top:20px;padding:16px 20px;background:rgba(0,192,111,.05);border:1px solid rgba(0,192,111,.18);border-radius:12px">
+      <div style="font-size:11px;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:8px">⚡ Supabase Cloud — تخزين مشترك بين جميع الأجهزة</div>
+      <div style="font-size:12px;color:var(--white-dim);margin-bottom:12px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(245,245,245,.25)">tpyklldftobwmeqxubig.supabase.co</span>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-        <div class="db-pill" id="admin-sb-pill"><div class="db-dot"></div><span id="admin-sb-txt">Checking…</span></div>
-        <button class="btn btn-outline btn-sm" onclick="reSyncScores()" style="padding:7px 14px;font-size:11px;width:auto;margin:0">☁️ مزامنة البيانات المحلية</button>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="db-pill" id="sb-admin"><div class="db-dot"></div><span id="sb-admin-txt">...</span></div>
+        <button class="btn btn-outline btn-sm" onclick="syncLocal()" style="width:auto;margin:0;padding:7px 14px">☁️ رفع البيانات المحلية</button>
       </div>
     </div>
-
-    <!-- SQL one-time setup -->
     <details style="margin-top:12px">
-      <summary style="cursor:pointer;font-size:12px;color:var(--white-dim);padding:8px 0;user-select:none">📄 كود SQL — شغّله مرة واحدة في Supabase → SQL Editor</summary>
-      <pre style="margin-top:8px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--white-dim);overflow-x:auto;line-height:1.7;white-space:pre">create table if not exists scores (
-  id          uuid default gen_random_uuid() primary key,
-  name        text not null,
-  dept        text default '',
-  score       int  not null default 0,
-  accuracy    int  default 0,
-  time_sec    int  default 0,
-  wrong_qs    text default '[]',
-  lang        text default 'ar',
-  qset        text default 'general',
-  created_at  timestamptz default now()
+      <summary style="cursor:pointer;color:var(--white-dim);font-size:12px;padding:8px 0;user-select:none">📄 كود SQL — شغّله مرة واحدة في Supabase</summary>
+      <pre style="margin-top:8px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--white-dim);overflow-x:auto;line-height:1.7;white-space:pre">-- شغّله في: Supabase → SQL Editor → New Query → اضغط Run
+create table if not exists scores (
+  id         uuid default gen_random_uuid() primary key,
+  name       text not null,
+  dept       text default '',
+  score      int  default 0,
+  accuracy   int  default 0,
+  time_sec   int  default 0,
+  wrong_qs   text default '[]',
+  lang       text default 'ar',
+  qset       text default 'general',
+  created_at timestamptz default now()
 );
 alter table scores enable row level security;
-create policy "open_scores" on scores
-  for all to anon using (true) with check (true);</pre>
+create policy "open" on scores for all to anon
+  using (true) with check (true);</pre>
     </details>
 
   </div>
@@ -988,110 +981,118 @@ const IDB = {
   }
 };
 
-// LS fallback helpers
-function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
-function lsPut(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+// ─── localStorage helpers ───────────────────────────────
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+function lsPut(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 
-/* ════════════════════════════════════════════════════════════
-   SUPABASE — Cloud leaderboard (scores only)
-   URL: https://tpyklldftobwmeqxubig.supabase.co
-   App NEVER waits for Supabase — zero impact on quiz flow
-════════════════════════════════════════════════════════════ */
-let SB = null, SB_OK = false;
+// ─── Supabase REST (no SDK — works with any key format) ──
+const SB_URL = 'https://tpyklldftobwmeqxubig.supabase.co';
+const SB_KEY = 'sb_publishable_dtHEbDtRCZYwWpMCkTP9tw_9tWUiu9i';
+let   SB_OK  = false;  // becomes true after first successful ping
 
-function sbPill(s,l){
+function sbPill(state, label){
   const p=document.getElementById('db-pill'), t=document.getElementById('db-txt');
-  if(p) p.className='db-pill '+s; if(t) t.textContent=l;
+  if(p) p.className='db-pill '+state;
+  if(t) t.textContent=label;
 }
 
-// Init after app is ready — completely non-blocking
-window.addEventListener('load', function(){
+// Pure fetch — works with sb_publishable_ keys via REST
+async function sbFetch(path, method, body){
+  const opts = {
+    method: method||'GET',
+    headers: {
+      'apikey':        SB_KEY,
+      'Authorization': 'Bearer '+SB_KEY,
+      'Content-Type':  'application/json',
+      'Prefer':        method==='POST' ? 'return=representation' : ''
+    }
+  };
+  if(body) opts.body = JSON.stringify(body);
   try{
-    SB = window.supabase.createClient('https://tpyklldftobwmeqxubig.supabase.co','sb_publishable_dtHEbDtRCZYwWpMCkTP9tw_9tWUiu9i');
-    sbPill('syncing','Connecting…');
-    SB.from('scores').select('id',{count:'exact',head:true})
-      .then(function(r){
-        if(r.error){ sbPill('err','DB Error'); console.warn('[SB]',r.error.message); }
-        else{ SB_OK=true; sbPill('cloud','Cloud ✓'); }
-      });
-  }catch(e){ sbPill('err','SB Error'); console.warn('[SB init]',e.message); }
+    const r = await fetch(SB_URL+'/rest/v1/'+path, opts);
+    if(!r.ok) throw new Error(r.status+' '+r.statusText);
+    const txt = await r.text();
+    return txt ? JSON.parse(txt) : [];
+  }catch(e){
+    console.warn('[SB]', e.message);
+    return null;
+  }
+}
+
+// Ping Supabase — runs in background after app loads
+window.addEventListener('load', async function(){
+  sbPill('syncing','Connecting…');
+  const r = await sbFetch('scores?select=id&limit=1');
+  if(r !== null){ SB_OK=true; sbPill('cloud','Cloud ✓'); }
+  else           { sbPill('err','Local Mode'); }
 });
 
-/* ─────────────────────────────────────────────────────────
-   DB FUNCTIONS
-   Scores  → IDB (instant) + Supabase background sync
-   Qsets   → IDB only (never touch Supabase, always instant)
-   Config  → IDB only (never touch Supabase, always instant)
-───────────────────────────────────────────────────────── */
-
+// ─── SCORES — Supabase + IDB fallback ────────────────────
 async function dbSaveScore(r) {
-  // 1. Save to IDB immediately — quiz result is safe
-  if (IDB.db) { try{ await IDB.add('scores', {...r}); }catch(e){} }
-  else { const d=lsGet('sc')||[]; d.push({...r,id:Date.now()}); lsPut('sc',d); }
-  // 2. Background Supabase sync — fire-and-forget, never blocks
-  if (SB_OK) {
-    SB.from('scores').insert([{
-      name: r.name, dept: r.dept||'', score: r.score,
-      accuracy: r.accuracy||0, time_sec: r.time,
-      wrong_qs: JSON.stringify(r.wrongQs||[]),
-      lang: r.lang||'ar', qset: r.qset||'general',
+  // Save to IDB first (instant, never fails)
+  if(IDB.db){ try{ await IDB.add('scores',{...r}); }catch(e){} }
+  else{ const d=lsGet('sc')||[]; d.push({...r,id:Date.now()}); lsPut('sc',d); }
+  // Background sync to Supabase (fire-and-forget)
+  if(SB_OK){
+    sbFetch('scores', 'POST', {
+      name:       r.name,
+      dept:       r.dept||'',
+      score:      r.score,
+      accuracy:   r.accuracy||0,
+      time_sec:   r.time,
+      wrong_qs:   JSON.stringify(r.wrongQs||[]),
+      lang:       r.lang||'ar',
+      qset:       r.qset||'general',
       created_at: r.date||new Date().toISOString()
-    }])
-    .then(function(res){ if(!res.error) sbPill('cloud','Saved ✓'); })
-    .catch(function(){});
+    }).then(function(x){ if(x) sbPill('cloud','Saved ✓'); });
   }
 }
 
 async function dbGetScores() {
-  // Try Supabase first (has all devices' data)
-  if (SB_OK) {
-    const r = await SB.from('scores').select('*')
-      .order('score',{ascending:false}).order('time_sec',{ascending:true}).limit(500);
-    if (!r.error && r.data && r.data.length) {
-      return r.data.map(function(x){return{
-        id:x.id, name:x.name, dept:x.dept||'', score:x.score,
-        accuracy:x.accuracy||0, time:x.time_sec,
+  // Try Supabase (all devices' data)
+  if(SB_OK){
+    const rows = await sbFetch(
+      'scores?select=*&order=score.desc,time_sec.asc&limit=500'
+    );
+    if(rows && rows.length){
+      return rows.map(function(x){return{
+        id:x.id, name:x.name, dept:x.dept||'',
+        score:x.score, accuracy:x.accuracy||0, time:x.time_sec,
         wrongQs:(function(){try{return JSON.parse(x.wrong_qs||'[]');}catch(e){return[];}}()),
         lang:x.lang||'ar', qset:x.qset||'general', date:x.created_at
       };}); 
     }
   }
   // Local fallback
-  if (IDB.db) return (await IDB.getAll('scores')).reverse();
+  if(IDB.db) return (await IDB.getAll('scores')).reverse();
   return (lsGet('sc')||[]).reverse();
 }
 
 async function dbClearScores() {
-  if (SB_OK) {
-    try{
-      const s=await SB.from('scores').select('id');
-      if(s.data&&s.data.length){
-        const batch=s.data.map(function(r){return SB.from('scores').delete().eq('id',r.id);});
-        await Promise.all(batch);
-      }
-    }catch(e){}
-  }
-  if (IDB.db) await IDB.clear('scores');
+  if(SB_OK) await sbFetch(
+    'scores?id=neq.00000000-0000-0000-0000-000000000000','DELETE'
+  );
+  if(IDB.db) await IDB.clear('scores');
   else lsPut('sc',[]);
 }
 
-// Qsets — IDB only, always instant, never depends on Supabase
+// ─── QSETS — IDB only (instant, no network) ──────────────
 async function dbSaveQset(qs) {
-  if (IDB.db) return IDB.put('qsets', qs);
+  if(IDB.db) return IDB.put('qsets', qs);
   const d=lsGet('qsets')||{}; d[qs.id]=qs; lsPut('qsets',d);
 }
 async function dbGetQsets() {
-  if (IDB.db) return IDB.getAll('qsets');
+  if(IDB.db) return IDB.getAll('qsets');
   const d=lsGet('qsets')||{}; return Object.values(d);
 }
 
-// Config — IDB only, always instant
+// ─── CONFIG — IDB only (instant, no network) ─────────────
 async function dbGetCfg(k) {
-  if (IDB.db) { const r=await IDB.get('config',k); return r?r.val:null; }
+  if(IDB.db){ const r=await IDB.get('config',k); return r?r.val:null; }
   return lsGet('cfg_'+k);
 }
 async function dbSetCfg(k, v) {
-  if (IDB.db) return IDB.put('config',{key:k,val:v});
+  if(IDB.db) return IDB.put('config',{key:k,val:v});
   lsPut('cfg_'+k, v);
 }
 
@@ -1642,10 +1643,9 @@ async function loadAdmin(){
   document.getElementById('cfg-color').value   = cfg.color||'#CC0000';
   document.getElementById('cfg-time').value    = cfg.time||10;
   document.getElementById('cfg-depts').value   = (cfg.depts||[]).join(', ');
-  // Update Supabase status in admin
-  const aP=document.getElementById('admin-sb-pill'), aT=document.getElementById('admin-sb-txt');
-  if(aP&&aT){ if(SB_OK){aP.className='db-pill cloud';aT.textContent='Connected ✓';}
-    else{aP.className='db-pill err';aT.textContent='Not Connected';} }
+  const _ap=document.getElementById('sb-admin'), _at=document.getElementById('sb-admin-txt');
+  if(_ap&&_at){if(SB_OK){_ap.className='db-pill cloud';_at.textContent='Connected ✓';}
+    else{_ap.className='db-pill err';_at.textContent='Not connected';}}
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1876,25 +1876,22 @@ async function clearData(){
 
 function printReport(){ window.print(); }
 
-async function reSyncScores(){
-  if(!SB_OK){ toast(lang==='ar'?'Supabase غير متصل حتى الآن':'Supabase not connected yet','err'); return; }
-  // Get local scores and push any that aren't in Supabase
-  let local = [];
-  if(IDB.db) local = await IDB.getAll('scores');
-  else local = lsGet('sc')||[];
+async function syncLocal(){
+  if(!SB_OK){ toast(lang==='ar'?'Cloud غير متصل بعد':'Not connected yet','err'); return; }
+  const local = IDB.db ? await IDB.getAll('scores') : (lsGet('sc')||[]);
   if(!local.length){ toast(lang==='ar'?'لا توجد بيانات محلية':'No local data','ok'); return; }
-  let ok=0;
+  let n=0;
   for(const r of local){
-    const res = await SB.from('scores').insert([{
+    const x = await sbFetch('scores','POST',{
       name:r.name, dept:r.dept||'', score:r.score,
       accuracy:r.accuracy||0, time_sec:r.time,
       wrong_qs:JSON.stringify(r.wrongQs||[]),
       lang:r.lang||'ar', qset:r.qset||'general',
       created_at:r.date||new Date().toISOString()
-    }]).catch(()=>({error:true}));
-    if(!res.error) ok++;
+    });
+    if(x) n++;
   }
-  toast((lang==='ar'?`✓ تم رفع ${ok} سجل للسحابة`:`✓ Synced ${ok} records`),'ok');
+  toast((lang==='ar'?`✓ تم رفع ${n} سجل`:`✓ Synced ${n} records`),'ok');
 }
 
 /* ═══════════════════════════════════════════════════════════
