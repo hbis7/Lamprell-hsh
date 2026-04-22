@@ -603,17 +603,16 @@ footer{
   .brand-sub,.brand-divider{display:none}
 }
 
-/* ── Supabase Connection Status ── */
-.db-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--white-faint);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--white-dim);user-select:none;cursor:default;white-space:nowrap}
-.db-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .4s}
+/* ── DB Status Pill ── */
+.db-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--white-faint);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--white-dim);user-select:none;white-space:nowrap}
+.db-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);flex-shrink:0;transition:all .4s}
 .db-pill.cloud   .db-dot{background:var(--green);box-shadow:0 0 7px rgba(0,192,111,.9)}
-.db-pill.syncing .db-dot{background:var(--red);animation:dbpulse .65s ease-in-out infinite alternate}
-.db-pill.local   .db-dot{background:var(--amber)}
-.db-pill.error   .db-dot{background:var(--danger)}
-@keyframes dbpulse{to{opacity:.15;transform:scale(.5)}}
+.db-pill.syncing .db-dot{background:var(--red);animation:dbp .6s ease-in-out infinite alternate}
+.db-pill.err     .db-dot{background:var(--danger)}
+@keyframes dbp{to{opacity:.15;transform:scale(.5)}}
 </style>
-<!-- Supabase JS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase JS v2 (supports sb_publishable_ keys) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -659,9 +658,7 @@ footer{
     <div class="hdr-badge">HSE</div>
   </div>
   <div class="hdr-right">
-    <div class="db-pill local" id="db-pill">
-      <div class="db-dot"></div><span id="db-txt">Connecting…</span>
-    </div>
+    <div class="db-pill" id="db-pill"><div class="db-dot"></div><span id="db-txt">Local</span></div>
     <select id="langSel" onchange="setLang(this.value)">
       <option value="ar">🇸🇦 العربية</option>
       <option value="en">🇬🇧 English</option>
@@ -877,31 +874,25 @@ footer{
       <button class="btn btn-red" style="width:auto;padding:12px 28px" onclick="saveConfig()">💾 حفظ الإعدادات</button>
     </div>
 
-    <!-- Supabase Status Card -->
-    <div style="margin-top:24px;padding:18px;background:rgba(0,192,111,0.05);border:1px solid rgba(0,192,111,0.2);border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <!-- Supabase Info Card -->
+    <div style="margin-top:22px;padding:16px 20px;background:rgba(0,192,111,.05);border:1px solid rgba(0,192,111,.18);border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
-        <div style="font-size:11px;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:6px">⚡ Supabase Cloud Database</div>
+        <div style="font-size:11px;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:5px">⚡ Supabase Cloud — Active</div>
         <div style="font-size:12px;color:var(--white-dim);line-height:1.7">
-          المشروع: <strong style="color:var(--white)">tpyklldftobwmeqxubig</strong><br>
-          البيانات مشتركة بين جميع الأجهزة — تتزامن فوراً
+          البيانات مشتركة بين جميع الأجهزة<br>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(245,245,245,.3)">tpyklldftobwmeqxubig.supabase.co</span>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-        <div class="db-pill" id="sb-status-pill"><div class="db-dot"></div><span id="sb-status-txt">Checking…</span></div>
-        <button class="btn btn-outline btn-sm" onclick="syncOfflineScores()" style="padding:7px 14px;font-size:11px">
-          ☁️ رفع البيانات المحلية
-        </button>
+        <div class="db-pill" id="admin-sb-pill"><div class="db-dot"></div><span id="admin-sb-txt">Checking…</span></div>
+        <button class="btn btn-outline btn-sm" onclick="reSyncScores()" style="padding:7px 14px;font-size:11px;width:auto;margin:0">☁️ مزامنة البيانات المحلية</button>
       </div>
     </div>
 
-    <!-- SQL Setup Guide (collapsed) -->
+    <!-- SQL one-time setup -->
     <details style="margin-top:12px">
-      <summary style="cursor:pointer;font-size:12px;color:var(--white-dim);letter-spacing:1px;padding:8px 0;user-select:none">
-        📄 كود SQL — لو أول مرة تفتح Supabase وتحتاج إنشاء الجداول
-      </summary>
-      <pre style="margin-top:10px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--white-dim);overflow-x:auto;line-height:1.75;white-space:pre">-- Lamprell HSE Portal — Run in: Supabase → SQL Editor → New Query
-
-create table if not exists scores (
+      <summary style="cursor:pointer;font-size:12px;color:var(--white-dim);padding:8px 0;user-select:none">📄 كود SQL — شغّله مرة واحدة في Supabase → SQL Editor</summary>
+      <pre style="margin-top:8px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--white-dim);overflow-x:auto;line-height:1.7;white-space:pre">create table if not exists scores (
   id          uuid default gen_random_uuid() primary key,
   name        text not null,
   dept        text default '',
@@ -913,18 +904,10 @@ create table if not exists scores (
   qset        text default 'general',
   created_at  timestamptz default now()
 );
-create table if not exists qsets  (id text primary key, data text not null);
-create table if not exists config (key text primary key, val  text not null);
-
 alter table scores enable row level security;
-alter table qsets  enable row level security;
-alter table config enable row level security;
-
-create policy "public_all_scores" on scores for all to anon using (true) with check (true);
-create policy "public_all_qsets"  on qsets  for all to anon using (true) with check (true);
-create policy "public_all_config" on config for all to anon using (true) with check (true);</pre>
+create policy "open_scores" on scores
+  for all to anon using (true) with check (true);</pre>
     </details>
-
 
   </div>
 </div>
@@ -937,162 +920,179 @@ create policy "public_all_config" on config for all to anon using (true) with ch
 </footer>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   SUPABASE — Single source of truth for all devices
-   Setup: Admin Panel → Settings → Supabase
-   Docs:  supabase.com/docs
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   DATABASE — IndexedDB + localStorage fallback
+═══════════════════════════════════════════════════════════ */
+const IDB = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open('lamprell_hse_v3', 3);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('scores')) {
+          const s = db.createObjectStore('scores', {keyPath:'id',autoIncrement:true});
+          s.createIndex('date','date'); s.createIndex('score','score');
+        }
+        if (!db.objectStoreNames.contains('qsets')) {
+          db.createObjectStore('qsets', {keyPath:'id'});
+        }
+        if (!db.objectStoreNames.contains('config')) {
+          db.createObjectStore('config', {keyPath:'key'});
+        }
+      };
+      req.onsuccess = e => { IDB.db = e.target.result; res(IDB.db); };
+      req.onerror   = () => { console.warn('IDB unavailable'); res(null); };
+    });
+  },
+  tx(store, mode='readonly') { return IDB.db.transaction(store, mode).objectStore(store); },
+  put(store, val) {
+    return new Promise((res,rej) => {
+      const req = IDB.tx(store,'readwrite').put(val);
+      req.onsuccess = () => res(req.result);
+      req.onerror   = () => rej(req.error);
+    });
+  },
+  add(store, val) {
+    return new Promise((res,rej) => {
+      const req = IDB.tx(store,'readwrite').add(val);
+      req.onsuccess = () => res(req.result);
+      req.onerror   = () => rej(req.error);
+    });
+  },
+  getAll(store) {
+    return new Promise(res => {
+      const req = IDB.tx(store).getAll();
+      req.onsuccess = () => res(req.result||[]);
+      req.onerror   = () => res([]);
+    });
+  },
+  get(store, key) {
+    return new Promise(res => {
+      const req = IDB.tx(store).get(key);
+      req.onsuccess = () => res(req.result||null);
+      req.onerror   = () => res(null);
+    });
+  },
+  del(store, key) {
+    return new Promise(res => {
+      const req = IDB.tx(store,'readwrite').delete(key);
+      req.onsuccess = () => res(); req.onerror = () => res();
+    });
+  },
+  clear(store) {
+    return new Promise(res => {
+      const req = IDB.tx(store,'readwrite').clear();
+      req.onsuccess = () => res(); req.onerror = () => res();
+    });
+  }
+};
 
-// localStorage helpers (used ONLY for Supabase credentials + offline qsets/config)
+// LS fallback helpers
 function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
 function lsPut(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 
-// Supabase — hardcoded credentials (lamprell-hse project)
-let SB = null;
-let SB_READY = false;
+/* ════════════════════════════════════════════════════════════
+   SUPABASE — Cloud leaderboard (scores only)
+   URL: https://tpyklldftobwmeqxubig.supabase.co
+   App NEVER waits for Supabase — zero impact on quiz flow
+════════════════════════════════════════════════════════════ */
+let SB = null, SB_OK = false;
 
-function setDbPill(state, label){
-  const p = document.getElementById('db-pill');
-  const t = document.getElementById('db-txt');
-  if (p) p.className = 'db-pill ' + state;
-  if (t) t.textContent = label;
+function sbPill(s,l){
+  const p=document.getElementById('db-pill'), t=document.getElementById('db-txt');
+  if(p) p.className='db-pill '+s; if(t) t.textContent=l;
 }
 
-function initSupabase(){
-  try {
-    SB = window.supabase.createClient(
-      'https://tpyklldftobwmeqxubig.supabase.co',
-      'sb_publishable_dtHEbDtRCZYwWpMCkTP9tw_9tWUiu9i'
-    );
-    setDbPill('syncing', 'Connecting…');
-    SB.from('scores').select('id', {count:'exact', head:true})
-      .then(({ error }) => {
-        if (error) { setDbPill('error','DB Error'); console.warn('[SB]', error.message); }
-        else        { SB_READY = true; setDbPill('cloud','Cloud ✓'); }
+// Init after app is ready — completely non-blocking
+window.addEventListener('load', function(){
+  try{
+    SB = window.supabase.createClient('https://tpyklldftobwmeqxubig.supabase.co','sb_publishable_dtHEbDtRCZYwWpMCkTP9tw_9tWUiu9i');
+    sbPill('syncing','Connecting…');
+    SB.from('scores').select('id',{count:'exact',head:true})
+      .then(function(r){
+        if(r.error){ sbPill('err','DB Error'); console.warn('[SB]',r.error.message); }
+        else{ SB_OK=true; sbPill('cloud','Cloud ✓'); }
       });
-  } catch(e) {
-    console.warn('[SB init]', e.message);
-    setDbPill('error','Init Error');
-  }
-}
+  }catch(e){ sbPill('err','SB Error'); console.warn('[SB init]',e.message); }
+});
 
-setTimeout(initSupabase, 300);
+/* ─────────────────────────────────────────────────────────
+   DB FUNCTIONS
+   Scores  → IDB (instant) + Supabase background sync
+   Qsets   → IDB only (never touch Supabase, always instant)
+   Config  → IDB only (never touch Supabase, always instant)
+───────────────────────────────────────────────────────── */
 
-/* ═══════════════════════════════════════════════════════════════
-   DATABASE API — Supabase primary, localStorage offline fallback
-═══════════════════════════════════════════════════════════════ */
-
-// ── SCORES ──────────────────────────────────────────────────────
 async function dbSaveScore(r) {
-  if (SB_READY) {
-    const { error } = await SB.from('scores').insert([{
-      name:       r.name,
-      dept:       r.dept        || '',
-      score:      r.score,
-      accuracy:   r.accuracy    || 0,
-      time_sec:   r.time,
-      wrong_qs:   JSON.stringify(r.wrongQs || []),
-      lang:       r.lang        || 'ar',
-      qset:       r.qset        || 'general',
-      created_at: r.date        || new Date().toISOString()
-    }]);
-    if (error) {
-      console.warn('[SB saveScore]', error.message);
-      setDbPill('error', 'Save Failed');
-    } else {
-      setDbPill('cloud', 'Saved ✓');
-      setTimeout(()=>setDbPill('cloud','Cloud ✓'), 2000);
-    }
-  } else {
-    // Offline fallback — save locally
-    const d = lsGet('scores_offline') || [];
-    d.push({...r, id: Date.now()});
-    lsPut('scores_offline', d);
-    setDbPill('local', 'Saved Locally');
+  // 1. Save to IDB immediately — quiz result is safe
+  if (IDB.db) { try{ await IDB.add('scores', {...r}); }catch(e){} }
+  else { const d=lsGet('sc')||[]; d.push({...r,id:Date.now()}); lsPut('sc',d); }
+  // 2. Background Supabase sync — fire-and-forget, never blocks
+  if (SB_OK) {
+    SB.from('scores').insert([{
+      name: r.name, dept: r.dept||'', score: r.score,
+      accuracy: r.accuracy||0, time_sec: r.time,
+      wrong_qs: JSON.stringify(r.wrongQs||[]),
+      lang: r.lang||'ar', qset: r.qset||'general',
+      created_at: r.date||new Date().toISOString()
+    }])
+    .then(function(res){ if(!res.error) sbPill('cloud','Saved ✓'); })
+    .catch(function(){});
   }
 }
 
 async function dbGetScores() {
-  if (SB_READY) {
-    const { data, error } = await SB
-      .from('scores')
-      .select('*')
-      .order('score', { ascending: false })
-      .order('time_sec', { ascending: true })
-      .limit(500);
-    if (!error && data) {
-      return data.map(r => ({
-        id:       r.id,
-        name:     r.name,
-        dept:     r.dept       || '',
-        score:    r.score,
-        accuracy: r.accuracy   || 0,
-        time:     r.time_sec,
-        wrongQs:  (() => { try { return JSON.parse(r.wrong_qs||'[]'); } catch(e){ return []; } })(),
-        lang:     r.lang       || 'ar',
-        qset:     r.qset       || 'general',
-        date:     r.created_at
-      }));
+  // Try Supabase first (has all devices' data)
+  if (SB_OK) {
+    const r = await SB.from('scores').select('*')
+      .order('score',{ascending:false}).order('time_sec',{ascending:true}).limit(500);
+    if (!r.error && r.data && r.data.length) {
+      return r.data.map(function(x){return{
+        id:x.id, name:x.name, dept:x.dept||'', score:x.score,
+        accuracy:x.accuracy||0, time:x.time_sec,
+        wrongQs:(function(){try{return JSON.parse(x.wrong_qs||'[]');}catch(e){return[];}}()),
+        lang:x.lang||'ar', qset:x.qset||'general', date:x.created_at
+      };}); 
     }
-    if (error) console.warn('[SB getScores]', error.message);
   }
-  // Offline fallback
-  return (lsGet('scores_offline') || []).reverse();
+  // Local fallback
+  if (IDB.db) return (await IDB.getAll('scores')).reverse();
+  return (lsGet('sc')||[]).reverse();
 }
 
 async function dbClearScores() {
-  if (SB_READY) {
-    const { error } = await SB.from('scores').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    if (error) console.warn('[SB clearScores]', error.message);
+  if (SB_OK) {
+    try{
+      const s=await SB.from('scores').select('id');
+      if(s.data&&s.data.length){
+        const batch=s.data.map(function(r){return SB.from('scores').delete().eq('id',r.id);});
+        await Promise.all(batch);
+      }
+    }catch(e){}
   }
-  lsPut('scores_offline', []);
+  if (IDB.db) await IDB.clear('scores');
+  else lsPut('sc',[]);
 }
 
-// ── QUESTION SETS ────────────────────────────────────────────────
+// Qsets — IDB only, always instant, never depends on Supabase
 async function dbSaveQset(qs) {
-  // Always save locally for offline access
-  const local = lsGet('qsets') || {};
-  local[qs.id] = qs;
-  lsPut('qsets', local);
-  // Sync to Supabase
-  if (SB_READY) {
-    const payload = { id: qs.id, data: JSON.stringify(qs) };
-    const { error } = await SB.from('qsets').upsert([payload], { onConflict: 'id' });
-    if (error) console.warn('[SB saveQset]', error.message);
-  }
+  if (IDB.db) return IDB.put('qsets', qs);
+  const d=lsGet('qsets')||{}; d[qs.id]=qs; lsPut('qsets',d);
 }
-
 async function dbGetQsets() {
-  if (SB_READY) {
-    const { data, error } = await SB.from('qsets').select('*');
-    if (!error && data && data.length) {
-      return data.map(r => { try { return JSON.parse(r.data); } catch(e){ return null; } }).filter(Boolean);
-    }
-    if (error) console.warn('[SB getQsets]', error.message);
-  }
-  // Local fallback
-  const d = lsGet('qsets') || {};
-  return Object.values(d);
+  if (IDB.db) return IDB.getAll('qsets');
+  const d=lsGet('qsets')||{}; return Object.values(d);
 }
 
-// ── CONFIG ───────────────────────────────────────────────────────
+// Config — IDB only, always instant
 async function dbGetCfg(k) {
-  if (SB_READY) {
-    const { data, error } = await SB.from('config').select('val').eq('key', k).single();
-    if (!error && data) {
-      try { return JSON.parse(data.val); } catch(e) { return data.val; }
-    }
-  }
-  return lsGet('cfg_' + k);
+  if (IDB.db) { const r=await IDB.get('config',k); return r?r.val:null; }
+  return lsGet('cfg_'+k);
 }
-
 async function dbSetCfg(k, v) {
-  const valStr = JSON.stringify(v);
-  lsPut('cfg_' + k, v);
-  if (SB_READY) {
-    const { error } = await SB.from('config').upsert([{ key: k, val: valStr }], { onConflict: 'key' });
-    if (error) console.warn('[SB setCfg]', error.message);
-  }
+  if (IDB.db) return IDB.put('config',{key:k,val:v});
+  lsPut('cfg_'+k, v);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1237,7 +1237,7 @@ let qsets=[];
    INIT
 ═══════════════════════════════════════════════════════════ */
 (async()=>{
-  // No IDB — Supabase only (with localStorage offline fallback)
+  await IDB.open();
   await loadConfig();
   await loadQsets();
   populateDepts();
@@ -1642,7 +1642,10 @@ async function loadAdmin(){
   document.getElementById('cfg-color').value   = cfg.color||'#CC0000';
   document.getElementById('cfg-time').value    = cfg.time||10;
   document.getElementById('cfg-depts').value   = (cfg.depts||[]).join(', ');
-  updateSbStatusPill();
+  // Update Supabase status in admin
+  const aP=document.getElementById('admin-sb-pill'), aT=document.getElementById('admin-sb-txt');
+  if(aP&&aT){ if(SB_OK){aP.className='db-pill cloud';aT.textContent='Connected ✓';}
+    else{aP.className='db-pill err';aT.textContent='Not Connected';} }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1873,34 +1876,25 @@ async function clearData(){
 
 function printReport(){ window.print(); }
 
-/* ── Supabase connection ── */
-
-async function syncOfflineScores(){
-  if(!SB_READY){ toast(lang==='ar'?'يجب الاتصال بـ Supabase أولاً':'Connect to Supabase first','err'); return; }
-  const offline = lsGet('scores_offline')||[];
-  if(!offline.length){ toast(lang==='ar'?'لا توجد بيانات محلية للرفع':'No offline data to sync','ok'); return; }
-  let synced=0;
-  for(const r of offline){
-    const {error} = await SB.from('scores').insert([{
-      name: r.name, dept: r.dept||'', score: r.score,
-      accuracy: r.accuracy||0, time_sec: r.time,
-      wrong_qs: JSON.stringify(r.wrongQs||[]),
-      lang: r.lang||'ar', qset: r.qset||'general',
-      created_at: r.date||new Date().toISOString()
-    }]);
-    if(!error) synced++;
+async function reSyncScores(){
+  if(!SB_OK){ toast(lang==='ar'?'Supabase غير متصل حتى الآن':'Supabase not connected yet','err'); return; }
+  // Get local scores and push any that aren't in Supabase
+  let local = [];
+  if(IDB.db) local = await IDB.getAll('scores');
+  else local = lsGet('sc')||[];
+  if(!local.length){ toast(lang==='ar'?'لا توجد بيانات محلية':'No local data','ok'); return; }
+  let ok=0;
+  for(const r of local){
+    const res = await SB.from('scores').insert([{
+      name:r.name, dept:r.dept||'', score:r.score,
+      accuracy:r.accuracy||0, time_sec:r.time,
+      wrong_qs:JSON.stringify(r.wrongQs||[]),
+      lang:r.lang||'ar', qset:r.qset||'general',
+      created_at:r.date||new Date().toISOString()
+    }]).catch(()=>({error:true}));
+    if(!res.error) ok++;
   }
-  lsPut('scores_offline',[]);
-  toast((lang==='ar'?`✓ تم رفع ${synced} سجل للسحابة`:`✓ Synced ${synced} records to cloud`),'ok');
-}
-
-function updateSbStatusPill(){
-  const p = document.getElementById('sb-status-pill');
-  const t = document.getElementById('sb-status-txt');
-  if(!p||!t) return;
-  if(SB_READY){ p.className='db-pill cloud'; t.textContent='Connected ✓'; }
-  else if(lsGet('sb_url')){ p.className='db-pill error'; t.textContent='Not Connected'; }
-  else { p.className='db-pill local'; t.textContent='Not Configured'; }
+  toast((lang==='ar'?`✓ تم رفع ${ok} سجل للسحابة`:`✓ Synced ${ok} records`),'ok');
 }
 
 /* ═══════════════════════════════════════════════════════════
