@@ -1,1478 +1,1185 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl" id="ROOT">
+out = []
+
+out.append('''<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#0A0A0F">
-<title>Lamprell · Road Safety</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lambriel KSA — النظام الداخلي</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-/* ═══════════════════════════════════════════════════════
-   DESIGN TOKENS
-═══════════════════════════════════════════════════════ */
-:root{
-  --red:#CC0000; --red-h:#E00000; --red-d:#990000;
-  --red-glow:rgba(204,0,0,0.3); --red-faint:rgba(204,0,0,0.07);
-  --w:#F5F5F7; --wd:rgba(245,245,247,0.58); --wf:rgba(245,245,247,0.06);
-  --ink:#08080F; --surf:#101018; --panel:#161620; --card:#1C1C28;
-  --border:rgba(255,255,255,0.07); --br:rgba(204,0,0,0.25);
-  --green:#00C07A; --amber:#F59E0B; --danger:#FF3B3B;
-  --shadow:0 40px 100px rgba(0,0,0,0.6);
-}
-
-/* ── RESET & BASE ── */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{height:100%;-webkit-text-size-adjust:100%;scroll-behavior:smooth}
-body{
-  font-family:'IBM Plex Sans Arabic',sans-serif;
-  background:var(--ink);color:var(--w);
-  min-height:100dvh;display:flex;flex-direction:column;
-  overflow-x:hidden;-webkit-font-smoothing:antialiased;
-}
-
-/* ── ANIMATED BACKGROUND ── */
-.bg-scene{
-  position:fixed;inset:0;z-index:0;overflow:hidden;
-  pointer-events:none;
-}
-/* Dark gradient sky */
-.bg-scene::before{
-  content:'';position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(204,0,0,0.08) 0%,transparent 60%),
-    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(204,0,0,0.04) 0%,transparent 50%);
-}
-/* Grid */
-.bg-grid{
-  position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px);
-  background-size:60px 60px;
-  mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,0.6) 30%,rgba(0,0,0,0.6) 70%,transparent 100%);
-}
-/* Road at bottom */
-.bg-road{
-  position:absolute;bottom:0;left:0;right:0;height:220px;
-  background:linear-gradient(to top,#0D0D0D 0%,#111115 60%,transparent 100%);
-}
-.bg-road-line{
-  position:absolute;bottom:0;left:50%;width:6px;
-  background:repeating-linear-gradient(to top,
-    rgba(255,255,255,0.15) 0,rgba(255,255,255,0.15) 32px,
-    transparent 32px,transparent 64px);
-  height:200px;transform:translateX(-50%);
-  animation:road-scroll 1s linear infinite;
-}
-@keyframes road-scroll{to{background-position:0 64px}}
-
-/* Floating particles */
-.particle{
-  position:absolute;border-radius:50%;
-  animation:particle-float linear infinite;
-  pointer-events:none;
-}
-@keyframes particle-float{
-  0%{transform:translateY(100vh) scale(0);opacity:0}
-  10%{opacity:1}
-  90%{opacity:0.3}
-  100%{transform:translateY(-20px) scale(1.5);opacity:0}
-}
-
-header,main,footer,canvas{position:relative;z-index:1}
-
-/* ═══════════════════════════════════════════════════════
-   HEADER
-═══════════════════════════════════════════════════════ */
-header{
-  background:rgba(8,8,15,0.85);backdrop-filter:blur(24px);
-  border-bottom:1px solid var(--border);
-  height:58px;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 24px;position:sticky;top:0;z-index:200;
-  flex-shrink:0;
-}
-.hdr-brand{
-  display:flex;align-items:center;gap:14px;
-}
-.brand-logo{
-  font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
-  letter-spacing:4px;text-transform:uppercase;color:var(--w);
-}
-.brand-logo em{color:var(--red);font-style:normal}
-.brand-pipe{width:1px;height:24px;background:var(--border)}
-.brand-sub{font-size:10px;color:var(--wd);letter-spacing:2px;text-transform:uppercase}
-.hdr-badge{
-  background:var(--red);color:#fff;
-  font-size:9px;font-weight:700;font-family:'Syne',sans-serif;
-  padding:3px 8px;border-radius:3px;letter-spacing:1.5px;text-transform:uppercase;
-}
-.hdr-right{display:flex;align-items:center;gap:10px}
-.lang-toggle{
-  display:flex;border-radius:8px;overflow:hidden;
-  border:1px solid var(--border);background:var(--wf);
-}
-.lang-btn{
-  padding:6px 14px;font-size:12px;font-weight:700;
-  font-family:'IBM Plex Sans Arabic',sans-serif;
-  background:transparent;color:var(--wd);border:none;cursor:pointer;
-  transition:all .2s;
-}
-.lang-btn.on{background:var(--red);color:#fff}
-
-/* ═══════════════════════════════════════════════════════
-   MAIN LAYOUT
-═══════════════════════════════════════════════════════ */
-main{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  padding:20px 16px;min-height:0;
-}
-
-/* ═══════════════════════════════════════════════════════
-   SCREENS
-═══════════════════════════════════════════════════════ */
-.scr{display:none;width:100%;animation:scr-in .4s cubic-bezier(.2,.8,.4,1)}
-.scr.on{display:flex;flex-direction:column;align-items:center;justify-content:center}
-@keyframes scr-in{
-  from{opacity:0;transform:translateY(24px) scale(.97)}
-  to{opacity:1;transform:none}
-}
-
-/* ═══════════════════════════════════════════════════════
-   CARD
-═══════════════════════════════════════════════════════ */
-.card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:36px;
-  max-width:520px;width:100%;
-  box-shadow:var(--shadow);
-  position:relative;overflow:hidden;
-}
-.card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent 5%,var(--red) 40%,var(--red) 60%,transparent 95%);
-}
-.card-wide{max-width:700px}
-
-/* Card shine effect */
-.card-shine{
-  position:absolute;inset:0;border-radius:20px;
-  background:linear-gradient(135deg,rgba(255,255,255,0.03) 0%,transparent 60%);
-  pointer-events:none;
-}
-
-/* ═══════════════════════════════════════════════════════
-   INTRO SCREEN
-═══════════════════════════════════════════════════════ */
-.intro-hero{
-  width:100%;max-width:460px;margin:0 auto 28px;
-  border-radius:16px;overflow:hidden;
-  border:1px solid var(--border);
-  position:relative;background:var(--card);
-}
-
-.campaign-pill{
-  display:inline-flex;align-items:center;gap:8px;
-  background:var(--red-faint);border:1px solid var(--br);
-  border-radius:100px;padding:5px 14px;
-  font-size:11px;font-weight:700;color:var(--red);
-  letter-spacing:1px;text-transform:uppercase;margin-bottom:18px;
-}
-.pulse-dot{
-  width:6px;height:6px;border-radius:50%;background:var(--red);
-  animation:pulse-dot 1.6s ease-in-out infinite;
-}
-@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.6)}}
-
-.intro-title{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:42px;font-weight:800;line-height:1.0;
-  letter-spacing:-.5px;margin-bottom:14px;
-}
-.intro-title span{color:var(--red)}
-.intro-sub{font-size:13px;color:var(--wd);line-height:1.8;margin-bottom:26px;max-width:420px}
-
-.chip-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px}
-.chip{
-  display:flex;align-items:center;gap:6px;
-  padding:6px 14px;border-radius:100px;
-  font-size:12px;font-weight:600;
-  background:var(--wf);border:1px solid var(--border);color:var(--wd);
-}
-.chip-red{background:var(--red-faint);border-color:var(--br);color:var(--red)}
-
-/* ═══════════════════════════════════════════════════════
-   BUTTONS
-═══════════════════════════════════════════════════════ */
-.btn{
-  display:block;width:100%;padding:16px;border:none;
-  border-radius:12px;font-family:inherit;font-size:15px;
-  font-weight:700;cursor:pointer;transition:all .2s;
-  text-align:center;margin-bottom:10px;line-height:1;
-}
-.btn:last-child{margin-bottom:0}
-.btn-red{
-  background:var(--red);color:#fff;
-  box-shadow:0 4px 28px rgba(204,0,0,0.4);
-}
-.btn-red:hover{background:var(--red-h);transform:translateY(-2px);box-shadow:0 8px 36px rgba(204,0,0,0.55)}
-.btn-red:active{transform:translateY(0)}
-.btn-outline{
-  background:transparent;color:var(--wd);
-  border:1px solid var(--border);font-size:13px;padding:12px;
-}
-.btn-outline:hover{border-color:var(--red);color:var(--w)}
-.btn-ghost{background:transparent;color:var(--wd);font-size:13px;padding:10px;border:none}
-.btn-ghost:hover{color:var(--w)}
-
-/* ═══════════════════════════════════════════════════════
-   TIPS SCREEN
-═══════════════════════════════════════════════════════ */
-.tip-item{
-  display:flex;align-items:flex-start;gap:12px;
-  padding:12px 16px;
-  background:var(--wf);border:1px solid var(--border);
-  border-radius:12px;margin-bottom:8px;
-  transition:border-color .15s;
-}
-.tip-item:hover{border-color:var(--br)}
-.tip-ico{font-size:20px;flex-shrink:0;margin-top:1px}
-.tip-text{font-size:13px;color:var(--wd);line-height:1.6}
-.tip-text strong{color:var(--w)}
-
-/* ═══════════════════════════════════════════════════════
-   QUIZ SCREEN
-═══════════════════════════════════════════════════════ */
-.q-top{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:20px;gap:16px;
-}
-.q-dots{display:flex;gap:7px}
-.q-dot{
-  height:4px;border-radius:2px;background:var(--wf);
-  transition:all .4s ease;
-}
-.q-dot.done{background:var(--red);opacity:.5}
-.q-dot.active{background:var(--red);animation:dot-pulse .8s ease infinite alternate}
-@keyframes dot-pulse{to{box-shadow:0 0 8px var(--red-glow)}}
-
-/* Circular timer */
-.timer-wrap{position:relative;width:58px;height:58px;flex-shrink:0}
-.timer-wrap svg{transform:rotate(-90deg);display:block}
-.timer-bg{fill:none;stroke:var(--wf);stroke-width:4}
-.timer-fg{
-  fill:none;stroke:var(--red);stroke-width:4;stroke-linecap:round;
-  stroke-dasharray:157;stroke-dashoffset:0;
-  transition:stroke-dashoffset 1s linear,stroke .3s;
-}
-.timer-fg.warn{stroke:var(--amber)}
-.timer-fg.crit{stroke:var(--danger)}
-.timer-num{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;
-}
-.timer-num.crit{color:var(--danger);animation:blink .45s ease infinite alternate}
-@keyframes blink{to{opacity:.3}}
-
-/* Question illustration */
-.q-illus{
-  width:100%;border-radius:14px;overflow:hidden;
-  margin-bottom:20px;border:1px solid var(--border);
-  background:var(--card);min-height:140px;
-  display:flex;align-items:center;justify-content:center;
-}
-
-/* Category badge */
-.q-badge{
-  display:inline-block;padding:4px 12px;
-  background:var(--red-faint);border:1px solid var(--br);
-  border-radius:6px;font-size:11px;font-weight:700;color:var(--red);
-  letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;
-}
-
-.q-text{
-  font-size:18px;font-weight:600;line-height:1.65;
-  color:var(--w);margin-bottom:24px;
-  font-family:'IBM Plex Sans Arabic',sans-serif;
-}
-
-/* TRUE/FALSE buttons */
-.tf-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px}
-.tf-btn{
-  padding:20px 10px;border-radius:14px;
-  border:2px solid var(--border);background:var(--wf);
-  color:var(--wd);font-family:inherit;cursor:pointer;
-  transition:all .18s;
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-}
-.tf-emoji{font-size:26px}
-.tf-word{font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif}
-.tf-btn:hover{border-color:var(--red);background:var(--red-faint);color:var(--w);transform:scale(1.02)}
-.tf-btn:disabled{cursor:default;transform:none}
-.tf-btn.correct{border-color:var(--green)!important;background:rgba(0,192,122,.12)!important;color:var(--green)!important;animation:pop .35s ease}
-.tf-btn.wrong{border-color:var(--danger)!important;background:rgba(255,59,59,.1)!important;color:var(--danger)!important;animation:shake .4s ease}
-.tf-btn.reveal{border-color:rgba(0,192,122,.3)!important;background:rgba(0,192,122,.04)!important}
-
-/* MCQ buttons */
-.mc-list{display:flex;flex-direction:column;gap:10px}
-.mc-btn{
-  display:flex;align-items:center;gap:14px;
-  padding:14px 18px;border-radius:12px;
-  border:1.5px solid var(--border);background:var(--wf);
-  color:var(--w);font-family:inherit;font-size:14px;font-weight:600;
-  cursor:pointer;transition:all .16s;width:100%;
-  text-align:right;line-height:1.4;
-}
-[dir="ltr"] .mc-btn{text-align:left}
-.mc-btn:hover{border-color:rgba(204,0,0,.45);background:var(--red-faint);transform:translateX(-4px)}
-[dir="ltr"] .mc-btn:hover{transform:translateX(4px)}
-.mc-btn:disabled{cursor:default;transform:none}
-.mc-letter{
-  width:32px;height:32px;flex-shrink:0;
-  background:var(--wf);border:1px solid var(--border);
-  border-radius:8px;display:flex;align-items:center;justify-content:center;
-  font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;
-  color:var(--wd);transition:all .16s;
-}
-.mc-btn:hover .mc-letter{background:var(--red-faint);border-color:var(--br);color:var(--red)}
-.mc-btn.correct{border-color:var(--green)!important;background:rgba(0,192,122,.12)!important;color:var(--green)!important;animation:pop .35s ease}
-.mc-btn.correct .mc-letter{background:rgba(0,192,122,.2)!important;border-color:var(--green)!important;color:var(--green)!important}
-.mc-btn.wrong{border-color:var(--danger)!important;background:rgba(255,59,59,.1)!important;color:var(--danger)!important;animation:shake .4s ease}
-.mc-btn.wrong .mc-letter{background:rgba(255,59,59,.2)!important;border-color:var(--danger)!important;color:var(--danger)!important}
-.mc-btn.reveal{border-color:rgba(0,192,122,.3)!important;background:rgba(0,192,122,.04)!important}
-
-@keyframes pop{0%{transform:scale(1)}30%{transform:scale(1.03)}100%{transform:scale(1)}}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(4px)}}
-
-/* Explain box */
-.explain-box{
-  margin-top:14px;padding:13px 16px;border-radius:10px;
-  font-size:12px;color:var(--wd);line-height:1.75;
-  background:rgba(255,255,255,0.03);border:1px solid var(--border);
-  animation:scr-in .3s ease;
-}
-
-/* ── FEEDBACK OVERLAY ── */
-#fb-overlay{
-  position:fixed;inset:0;z-index:500;
-  display:flex;align-items:center;justify-content:center;
-  pointer-events:none;opacity:0;transition:opacity .15s;
-}
-#fb-overlay.show{opacity:1}
-.fb-emoji{
-  font-size:96px;
-  animation:fb-pop .5s cubic-bezier(.175,.885,.32,1.275);
-  filter:drop-shadow(0 0 40px rgba(0,0,0,.5));
-}
-@keyframes fb-pop{
-  0%{transform:scale(0) rotate(-15deg);opacity:0}
-  60%{transform:scale(1.3) rotate(4deg)}
-  100%{transform:scale(1) rotate(0);opacity:1}
-}
-
-/* Score pop */
-.score-pop{
-  position:fixed;pointer-events:none;z-index:501;
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:40px;font-weight:800;color:var(--green);
-  animation:score-float 1.2s cubic-bezier(.2,.8,.4,1) forwards;
-  text-shadow:0 4px 20px rgba(0,192,122,.5);
-}
-@keyframes score-float{
-  0%{opacity:1;transform:translateY(0) scale(1)}
-  100%{opacity:0;transform:translateY(-100px) scale(.6)}
-}
-
-/* ═══════════════════════════════════════════════════════
-   RESULT SCREEN
-═══════════════════════════════════════════════════════ */
-.result-ring-wrap{
-  position:relative;width:160px;height:160px;margin:0 auto 24px;
-}
-.result-ring-wrap svg{transform:rotate(-90deg)}
-.rr-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:7}
-.rr-fg{
-  fill:none;stroke:var(--red);stroke-width:7;stroke-linecap:round;
-  stroke-dasharray:440;stroke-dashoffset:440;
-  transition:stroke-dashoffset 1.6s cubic-bezier(.4,0,.2,1);
-}
-.rr-inner{
-  position:absolute;inset:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-}
-.rr-score{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:58px;font-weight:800;color:var(--w);line-height:1;
-}
-.rr-denom{font-size:16px;color:var(--wd)}
-
-.result-grade{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:30px;font-weight:800;letter-spacing:.5px;
-  margin-bottom:8px;text-align:center;
-}
-
-.result-stats{display:flex;gap:12px;margin-bottom:24px}
-.rs-pill{
-  flex:1;background:var(--wf);border:1px solid var(--border);
-  border-radius:12px;padding:14px;text-align:center;
-}
-.rs-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800}
-.rs-lbl{font-size:10px;color:var(--wd);letter-spacing:1px;text-transform:uppercase;margin-top:3px}
-
-.result-msg{
-  border-radius:12px;padding:16px 18px;
-  font-size:13px;line-height:1.8;margin-bottom:24px;text-align:center;
-}
-.r-perfect{background:rgba(0,192,122,.08);border:1px solid rgba(0,192,122,.25);color:rgba(0,192,122,.9)}
-.r-good{background:var(--wf);border:1px solid var(--border);color:var(--wd)}
-.r-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--amber)}
-.r-bad{background:rgba(255,59,59,.08);border:1px solid rgba(255,59,59,.2);color:var(--danger)}
-
-/* Tips strip */
-.tips-strip{
-  background:var(--red-faint);border:1px solid var(--br);
-  border-radius:12px;padding:16px;margin-bottom:22px;
-}
-.tips-strip-title{
-  font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--red);font-weight:700;margin-bottom:10px;
-}
-.ts-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:7px;font-size:12px;color:var(--wd);line-height:1.5}
-.ts-ico{color:var(--red);flex-shrink:0}
-
-/* ═══════════════════════════════════════════════════════
-   CANVAS CONFETTI
-═══════════════════════════════════════════════════════ */
-#confetti{position:fixed;inset:0;z-index:400;pointer-events:none}
-
-/* ═══════════════════════════════════════════════════════
-   FOOTER
-═══════════════════════════════════════════════════════ */
-footer{
-  text-align:center;padding:12px 16px;
-  border-top:1px solid var(--border);
-  flex-shrink:0;position:relative;z-index:1;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.ft-brand{
-  font-family:'Syne',sans-serif;font-size:12px;
-  letter-spacing:4px;color:rgba(245,245,247,0.14);text-transform:uppercase;
-}
-.ft-credit{font-size:9px;color:rgba(245,245,247,.1);letter-spacing:1px}
-
-/* ═══════════════════════════════════════════════════════
-   SCROLLABLE CARDS
-═══════════════════════════════════════════════════════ */
-.card.scroll{
-  max-height:calc(100dvh - 130px);overflow-y:auto;
-}
-.card.scroll::-webkit-scrollbar{width:3px}
-.card.scroll::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
-
-/* ═══════════════════════════════════════════════════════
-   CERTIFICATE / SHARE CARD
-═══════════════════════════════════════════════════════ */
-.cert-card{
-  background:linear-gradient(135deg,var(--panel) 0%,var(--card) 100%);
-  border:1px solid var(--border);border-radius:16px;
-  padding:24px;margin-bottom:16px;position:relative;overflow:hidden;
-}
-.cert-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--red-d),var(--red),var(--red-h),var(--red));
-}
-.cert-card::after{
-  content:'';position:absolute;
-  top:-60px;right:-60px;width:200px;height:200px;
-  border-radius:50%;
-  background:radial-gradient(circle,rgba(204,0,0,0.08) 0%,transparent 70%);
-  pointer-events:none;
-}
-
-/* ═══════════════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════════════ */
-@media(max-width:500px){
-  .card{padding:22px 16px;border-radius:16px}
-  header{padding:0 16px}
-  .brand-pipe,.brand-sub{display:none}
-  .intro-title{font-size:34px}
-  .q-text{font-size:16px}
-  .tf-btn{padding:16px 8px}
-  .rr-score{font-size:48px}
-}
-
-/* ── LTR adjustments ── */
-[dir="ltr"] .mc-btn{text-align:left}
-[dir="ltr"] .tf-btn .tf-word{font-family:'Barlow Condensed',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#F2F5FB;font-family:"Segoe UI","Segoe UI Arabic",Tahoma,Arial,sans-serif;direction:rtl;color:#0A1628}
+input,button,textarea,select{font-family:inherit}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:#C8D5E8;border-radius:3px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fade{animation:fadeUp 0.25s ease}
+table{border-collapse:collapse;width:100%}
 </style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo,useCallback}=React;
+''')
 
-<!-- BACKGROUND SCENE -->
-<div class="bg-scene">
-  <div class="bg-grid"></div>
-  <div class="bg-road">
-    <div class="bg-road-line"></div>
-  </div>
-</div>
+out.append(r"""
+// ─── PALETTE ───────────────────────────────────────────────────────────
+const C={
+  navy:"#07152A",navyMd:"#152E52",navyLt:"#1E4A7A",
+  gold:"#C0922A",goldBg:"#FBF0D2",goldText:"#7A5A0A",
+  bg:"#F2F5FB",bg2:"#E6EBF5",white:"#FFFFFF",
+  border:"#D0DAEA",text:"#07152A",textMd:"#3B5272",textLt:"#7890A8",
+  green:"#15803D",greenBg:"#DCFCE7",greenText:"#14532D",
+  red:"#DC2626",redBg:"#FEE2E2",redText:"#7F1D1D",
+  yellow:"#D97706",yellowBg:"#FEF3C7",yellowText:"#78350F",
+  blue:"#1D4ED8",blueBg:"#DBEAFE",blueText:"#1E3A8A",
+  gray:"#6B7280",grayBg:"#F3F4F6",
+};
 
-<canvas id="confetti"></canvas>
-<div id="fb-overlay"><div class="fb-emoji" id="fb-emoji"></div></div>
+const DEPTS=[
+  {id:"operations",name:"العمليات",short:"عمليات",color:"#1A4CA3",bg:"#DBEAFE"},
+  {id:"finance",name:"المالية",short:"مالية",color:"#15803D",bg:"#DCFCE7"},
+  {id:"hr",name:"الموارد البشرية",short:"موارد بشرية",color:"#7C3AED",bg:"#EDE9FE"},
+  {id:"it",name:"التقنية / IT",short:"IT",color:"#0E7490",bg:"#CFFAFE"},
+  {id:"projects",name:"المشاريع",short:"مشاريع",color:"#B45309",bg:"#FEF3C7"},
+  {id:"warehouse",name:"المستودع / اللوجستيك",short:"مستودع",color:"#9A1515",bg:"#FEE2E2"},
+  {id:"engineering",name:"الهندسة",short:"هندسة",color:"#5B21B6",bg:"#EDE9FE"},
+];
+const getDept=id=>DEPTS.find(d=>d.id===id)||{name:id,color:C.gray,bg:C.grayBg};
 
-<!-- HEADER -->
-<header>
-  <div class="hdr-brand">
-    <div class="brand-logo">LAMP<em>R</em>ELL</div>
-    <div class="brand-pipe"></div>
-    <div class="brand-sub">Road Safety</div>
-    <div class="hdr-badge">HSE</div>
-  </div>
-  <div class="hdr-right">
-    <div class="lang-toggle">
-      <button class="lang-btn on" id="btn-ar" onclick="setLang('ar')">ع</button>
-      <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+const ROLES={admin:"مدير النظام",manager:"مدير قسم",employee:"موظف"};
+
+const PR_STATUS={
+  pending:{label:"معلقة",color:C.yellow,bg:C.yellowBg,text:C.yellowText},
+  approved:{label:"موافق عليها",color:C.green,bg:C.greenBg,text:C.greenText},
+  rejected:{label:"مرفوضة",color:C.red,bg:C.redBg,text:C.redText},
+  processing:{label:"قيد المعالجة",color:C.blue,bg:C.blueBg,text:C.blueText},
+  completed:{label:"مكتملة",color:C.gray,bg:C.grayBg,text:"#374151"},
+};
+
+const TASK_STATUS={
+  new:{label:"جديدة",color:C.blue,bg:C.blueBg},
+  "in-progress":{label:"قيد التنفيذ",color:C.yellow,bg:C.yellowBg},
+  completed:{label:"مكتملة",color:C.green,bg:C.greenBg},
+  cancelled:{label:"ملغاة",color:C.gray,bg:C.grayBg},
+};
+
+const LEAVE_TYPES={annual:"سنوية",sick:"مرضية",emergency:"طارئة",unpaid:"بدون راتب"};
+const LEAVE_STATUS={
+  pending:{label:"بانتظار الموافقة",color:C.yellow,bg:C.yellowBg},
+  approved:{label:"موافق عليها",color:C.green,bg:C.greenBg},
+  rejected:{label:"مرفوضة",color:C.red,bg:C.redBg},
+};
+
+// ─── DEFAULT DATA ────────────────────────────────────────────────────────
+const DEFAULT_USERS=[
+  {id:"u1",name:"مدير النظام",username:"admin",password:"admin@2025",role:"admin",department:"it",position:"مدير النظام",email:"admin@lambriel.sa",phone:"0500000000",joinDate:"2023-01-01",active:true},
+  {id:"u2",name:"محمد العمري",username:"ops.manager",password:"123456",role:"manager",department:"operations",position:"مدير العمليات",email:"m.omari@lambriel.sa",phone:"0501111111",joinDate:"2023-03-15",active:true},
+  {id:"u3",name:"عبدالله الغامدي",username:"fin.manager",password:"123456",role:"manager",department:"finance",position:"مدير المالية",email:"a.ghamdi@lambriel.sa",phone:"0502222222",joinDate:"2023-02-01",active:true},
+  {id:"u4",name:"سارة الحربي",username:"hr.manager",password:"123456",role:"manager",department:"hr",position:"مدير الموارد البشرية",email:"s.harbi@lambriel.sa",phone:"0503333333",joinDate:"2023-01-10",active:true},
+  {id:"u5",name:"خالد الزهراني",username:"it.manager",password:"123456",role:"manager",department:"it",position:"مدير تقنية المعلومات",email:"k.zahrani@lambriel.sa",phone:"0504444444",joinDate:"2023-04-01",active:true},
+  {id:"u6",name:"فهد السعيد",username:"proj.manager",password:"123456",role:"manager",department:"projects",position:"مدير المشاريع",email:"f.saeed@lambriel.sa",phone:"0505555555",joinDate:"2023-01-20",active:true},
+  {id:"u7",name:"عمر البلوي",username:"wh.manager",password:"123456",role:"manager",department:"warehouse",position:"مدير المستودع",email:"o.balawi@lambriel.sa",phone:"0506666666",joinDate:"2023-05-01",active:true},
+  {id:"u8",name:"ناصر الدوسري",username:"eng.manager",password:"123456",role:"manager",department:"engineering",position:"مدير الهندسة",email:"n.dosari@lambriel.sa",phone:"0507777777",joinDate:"2023-02-15",active:true},
+  {id:"u9",name:"أحمد علي",username:"ahmed.ali",password:"123456",role:"employee",department:"operations",position:"مشرف عمليات",email:"a.ali@lambriel.sa",phone:"0508888888",joinDate:"2023-06-01",active:true},
+  {id:"u10",name:"فاطمة حسن",username:"fatima.h",password:"123456",role:"employee",department:"hr",position:"موظفة موارد بشرية",email:"f.hassan@lambriel.sa",phone:"0509999999",joinDate:"2023-07-01",active:true},
+  {id:"u11",name:"علي القحطاني",username:"ali.q",password:"123456",role:"employee",department:"engineering",position:"مهندس مدني",email:"a.qahtani@lambriel.sa",phone:"0511111111",joinDate:"2023-08-01",active:true},
+  {id:"u12",name:"نورة الشمري",username:"noura.s",password:"123456",role:"employee",department:"finance",position:"محاسبة",email:"n.shamri@lambriel.sa",phone:"0512222222",joinDate:"2023-09-01",active:true},
+];
+
+const DEFAULT_ANNOUNCEMENTS=[
+  {id:"an1",title:"اجتماع الفريق الشهري",content:"يُعقد الاجتماع الشهري للفريق يوم الأحد القادم الساعة 10 صباحاً في قاعة الاجتماعات الرئيسية. الحضور إلزامي لجميع مديري الأقسام.",author:"u1",departments:["all"],date:"2025-06-05",priority:"urgent",pinned:true},
+  {id:"an2",title:"تحديث سياسة الإجازات",content:"تم تحديث سياسة الإجازات السنوية اعتباراً من بداية الشهر القادم. يرجى مراجعة الموارد البشرية للاطلاع على التفاصيل الكاملة.",author:"u4",departments:["all"],date:"2025-06-03",priority:"normal",pinned:false},
+  {id:"an3",title:"متطلبات صيانة المعدات",content:"يرجى من قسم الهندسة والمستودع تقديم قائمة المعدات المطلوب صيانتها أو استبدالها خلال هذا الشهر.",author:"u8",departments:["engineering","warehouse"],date:"2025-06-01",priority:"normal",pinned:false},
+];
+
+const DEFAULT_PROCUREMENT=[
+  {id:"pr1",number:"PR-2025-001",title:"شراء أجهزة حاسوب للهندسة",department:"engineering",requestedBy:"u11",requestDate:"2025-06-01",priority:"urgent",status:"approved",items:[{id:"i1",name:"لابتوب Dell",description:"للمهندسين الجدد",quantity:3,unit:"قطعة",unitPrice:4500,total:13500},{id:"i2",name:"شاشة 24 بوصة",description:"",quantity:3,unit:"قطعة",unitPrice:850,total:2550}],totalEstimated:16050,justification:"تجهيز المهندسين الجدد المنضمين للقسم.",notes:"",approvals:[{by:"u8",role:"مدير الهندسة",action:"approved",date:"2025-06-02",note:"موافقة - الطلب ضروري"}],createdAt:"2025-06-01T09:00:00"},
+  {id:"pr2",number:"PR-2025-002",title:"مستلزمات مكتبية للعمليات",department:"operations",requestedBy:"u9",requestDate:"2025-06-02",priority:"normal",status:"pending",items:[{id:"i1",name:"ورق A4",description:"500 ورقة",quantity:10,unit:"رزمة",unitPrice:25,total:250},{id:"i2",name:"أقلام",description:"مجموعة متنوعة",quantity:5,unit:"علبة",unitPrice:15,total:75},{id:"i3",name:"مجلدات",description:"للتقارير",quantity:20,unit:"قطعة",unitPrice:8,total:160}],totalEstimated:485,justification:"نقص مستلزمات المكتب.",notes:"",approvals:[],createdAt:"2025-06-02T10:30:00"},
+  {id:"pr3",number:"PR-2025-003",title:"قطع غيار للمعدات الثقيلة",department:"warehouse",requestedBy:"u7",requestDate:"2025-05-28",priority:"urgent",status:"completed",items:[{id:"i1",name:"فلتر زيت",description:"للرافعة الشوكية",quantity:4,unit:"قطعة",unitPrice:120,total:480},{id:"i2",name:"خراطيم هيدروليك",description:"قياس 1 بوصة",quantity:6,unit:"متر",unitPrice:85,total:510}],totalEstimated:990,justification:"توقف معدات المستودع عن العمل يؤثر على العمليات.",notes:"تم الشراء من مورد المعتمد الأول.",approvals:[{by:"u7",role:"مدير المستودع",action:"approved",date:"2025-05-29",note:""},{by:"u3",role:"مدير المالية",action:"approved",date:"2025-05-30",note:""}],createdAt:"2025-05-28T08:00:00"},
+];
+
+const DEFAULT_TASKS=[
+  {id:"t1",title:"مراجعة عروض موردي المشتريات",description:"مراجعة العروض المقدمة من 3 موردين لطلب المشتريات PR-2025-001 وتقديم التوصية.",assignedTo:"u3",assignedBy:"u1",department:"finance",dueDate:"2025-06-10",priority:"high",status:"in-progress",createdAt:"2025-06-03",completedAt:null},
+  {id:"t2",title:"تحديث قاعدة بيانات الموردين",description:"إضافة الموردين الجدد وتحديث بيانات الاتصال للموردين الحاليين.",assignedTo:"u9",assignedBy:"u2",department:"operations",dueDate:"2025-06-15",priority:"medium",status:"new",createdAt:"2025-06-02",completedAt:null},
+  {id:"t3",title:"إعداد تقرير الأداء الشهري",description:"إعداد تقرير أداء شهر مايو لجميع الأقسام.",assignedTo:"u4",assignedBy:"u1",department:"hr",dueDate:"2025-06-08",priority:"high",status:"completed",createdAt:"2025-06-01",completedAt:"2025-06-07"},
+];
+
+const DEFAULT_LEAVES=[
+  {id:"lr1",userId:"u9",type:"annual",startDate:"2025-06-20",endDate:"2025-06-27",days:7,reason:"إجازة سنوية مخططة",status:"pending",appliedDate:"2025-06-04",approvedBy:null,approvedDate:null,rejectReason:null},
+  {id:"lr2",userId:"u11",type:"sick",startDate:"2025-06-05",endDate:"2025-06-06",days:2,reason:"مرض - تقرير طبي مرفق",status:"approved",appliedDate:"2025-06-05",approvedBy:"u8",approvedDate:"2025-06-05",rejectReason:null},
+];
+
+// ─── STORAGE HOOK ──────────────────────────────────────────────────────
+function useStore(key,def){
+  const [v,setV]=useState(()=>{try{const s=localStorage.getItem('lmb_'+key);return s?JSON.parse(s):def;}catch(e){return def;}});
+  const set=useCallback(fn=>{
+    setV(prev=>{const n=typeof fn==='function'?fn(prev):fn;try{localStorage.setItem('lmb_'+key,JSON.stringify(n));}catch(e){}return n;});
+  },[key]);
+  return[v,set];
+}
+
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function today(){return new Date().toISOString().split('T')[0];}
+function fmt(d){if(!d)return'—';return new Date(d).toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});}
+function fmtNum(n){return(n||0).toLocaleString('ar-SA');}
+""")
+
+out.append(r"""
+// ─── UI PRIMITIVES ───────────────────────────────────────────────────────
+function Btn({children,onClick,type="button",variant="primary",size="md",icon,disabled,full,style={}}){
+  const base={display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6,border:"none",
+    borderRadius:8,cursor:disabled?"not-allowed":"pointer",fontWeight:600,transition:"all 0.15s",
+    opacity:disabled?0.55:1,whiteSpace:"nowrap",
+    ...(size==="sm"?{fontSize:12,padding:"5px 12px"}:size==="lg"?{fontSize:15,padding:"11px 22px"}:{fontSize:13,padding:"8px 16px"}),
+    ...(full?{width:"100%"}:{}),
+    ...(variant==="primary"?{background:C.navy,color:"#fff"}:
+        variant==="gold"?{background:C.gold,color:"#fff"}:
+        variant==="success"?{background:C.green,color:"#fff"}:
+        variant==="danger"?{background:C.red,color:"#fff"}:
+        variant==="ghost"?{background:"transparent",color:C.textMd,border:"1.5px solid "+C.border}:
+        {background:C.bg2,color:C.text,border:"1.5px solid "+C.border}),
+    ...style};
+  return <button type={type} style={base} onClick={onClick} disabled={disabled}>{icon&&<span>{icon}</span>}{children}</button>;
+}
+
+function Card({children,style={},onClick}){
+  const[h,setH]=useState(false);
+  return <div onClick={onClick} onMouseEnter={onClick?()=>setH(true):undefined} onMouseLeave={onClick?()=>setH(false):undefined}
+    style={{background:C.white,borderRadius:12,border:"1px solid "+C.border,
+      ...(onClick?{cursor:"pointer",boxShadow:h?"0 4px 16px rgba(7,21,42,0.10)":"none",transition:"box-shadow 0.18s"}:{}),
+      ...style}}>{children}</div>;
+}
+
+function Badge({label,color=C.gray,bg=C.grayBg,size=11}){
+  return <span style={{display:"inline-block",background:bg,color,fontSize:size,fontWeight:700,padding:"2px 10px",borderRadius:20}}>{label}</span>;
+}
+
+function StatusBadge({status,map}){
+  const s=map[status]||{label:status,color:C.gray,bg:C.grayBg,text:C.gray};
+  return <span style={{display:"inline-block",background:s.bg,color:s.text||s.color,fontSize:12,fontWeight:700,padding:"3px 12px",borderRadius:20}}>{s.label}</span>;
+}
+
+function Input({label,value,onChange,type="text",placeholder="",required,disabled,style={}}){
+  return <div style={{marginBottom:14,...style}}>
+    {label&&<div style={{fontSize:13,fontWeight:600,color:C.textMd,marginBottom:5}}>{label}{required&&<span style={{color:C.red}}> *</span>}</div>}
+    <input type={type} value={value||""} onChange={e=>onChange(e.target.value)} placeholder={placeholder} disabled={disabled} required={required}
+      style={{width:"100%",padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,outline:"none",
+        background:disabled?C.bg2:C.white,color:C.text,transition:"border 0.15s"}}
+      onFocus={e=>e.target.style.borderColor=C.gold} onBlur={e=>e.target.style.borderColor=C.border}/>
+  </div>;
+}
+
+function Select({label,value,onChange,options,required,disabled}){
+  return <div style={{marginBottom:14}}>
+    {label&&<div style={{fontSize:13,fontWeight:600,color:C.textMd,marginBottom:5}}>{label}{required&&<span style={{color:C.red}}> *</span>}</div>}
+    <select value={value||""} onChange={e=>onChange(e.target.value)} disabled={disabled}
+      style={{width:"100%",padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,outline:"none",background:C.white,color:C.text}}>
+      {options.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  </div>;
+}
+
+function Textarea({label,value,onChange,rows=3,placeholder=""}){
+  return <div style={{marginBottom:14}}>
+    {label&&<div style={{fontSize:13,fontWeight:600,color:C.textMd,marginBottom:5}}>{label}</div>}
+    <textarea value={value||""} onChange={e=>onChange(e.target.value)} rows={rows} placeholder={placeholder}
+      style={{width:"100%",padding:"9px 12px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,outline:"none",resize:"vertical",background:C.white,color:C.text}}
+      onFocus={e=>e.target.style.borderColor=C.gold} onBlur={e=>e.target.style.borderColor=C.border}/>
+  </div>;
+}
+
+function Modal({title,onClose,children,width=560}){
+  return <div style={{position:"fixed",inset:0,background:"rgba(7,21,42,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div style={{background:C.white,borderRadius:14,width:"100%",maxWidth:width,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(7,21,42,0.25)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 22px",borderBottom:"1px solid "+C.border,position:"sticky",top:0,background:C.white,zIndex:1}}>
+        <div style={{fontSize:17,fontWeight:700,color:C.text}}>{title}</div>
+        <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:C.textLt,lineHeight:1}}>✕</button>
+      </div>
+      <div style={{padding:22}}>{children}</div>
     </div>
-  </div>
-</header>
+  </div>;
+}
 
-<main>
+function Tabs({tabs,active,onChange}){
+  return <div style={{display:"flex",gap:4,borderBottom:"2px solid "+C.border,marginBottom:20}}>
+    {tabs.map(tab=><button key={tab.id} onClick={()=>onChange(tab.id)}
+      style={{padding:"10px 18px",border:"none",background:"none",cursor:"pointer",fontSize:13,fontWeight:active===tab.id?700:500,
+        color:active===tab.id?C.gold:C.textMd,borderBottom:active===tab.id?"2px solid "+C.gold:"2px solid transparent",marginBottom:-2,transition:"all 0.15s"}}>
+      {tab.label}{tab.count!==undefined&&<span style={{marginRight:6,fontSize:11,background:active===tab.id?C.goldBg:C.bg2,color:active===tab.id?C.goldText:C.textMd,padding:"1px 7px",borderRadius:12}}>{tab.count}</span>}
+    </button>)}
+  </div>;
+}
 
-<!-- ══ INTRO ══ -->
-<div class="scr on" id="scr-intro">
-  <div class="card card-wide scroll">
-    <div class="card-shine"></div>
-
-    <!-- Hero SVG — Road scene -->
-    <div class="intro-hero">
-      <svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-        <defs>
-          <linearGradient id="sky-g" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#050508"/><stop offset="100%" stop-color="#12121c"/>
-          </linearGradient>
-          <radialGradient id="head-glow" cx="50%" cy="100%" r="60%">
-            <stop offset="0%" stop-color="rgba(255,224,102,0.18)"/>
-            <stop offset="100%" stop-color="transparent"/>
-          </radialGradient>
-          <radialGradient id="city-glow" cx="50%" cy="60%" r="40%">
-            <stop offset="0%" stop-color="rgba(204,0,0,0.05)"/><stop offset="100%" stop-color="transparent"/>
-          </radialGradient>
-        </defs>
-        <!-- Sky -->
-        <rect width="600" height="220" fill="url(#sky-g)"/>
-        <ellipse cx="300" cy="80" rx="280" ry="120" fill="url(#city-glow)"/>
-
-        <!-- Stars -->
-        <g fill="rgba(255,255,255,0.5)">
-          <circle cx="40" cy="18" r="1"/><circle cx="100" cy="32" r="0.7"/><circle cx="180" cy="12" r="1.2"/>
-          <circle cx="260" cy="24" r="0.8"/><circle cx="360" cy="15" r="1.1"/><circle cx="440" cy="30" r="0.7"/>
-          <circle cx="520" cy="10" r="1.3"/><circle cx="80" cy="48" r="0.6"/><circle cx="540" cy="42" r="0.9"/>
-          <circle cx="310" cy="8" r="0.8"/><circle cx="150" cy="50" r="0.5"/><circle cx="490" cy="55" r="0.7"/>
-        </g>
-
-        <!-- Moon -->
-        <circle cx="555" cy="30" r="18" fill="#1a1a2e"/>
-        <circle cx="563" cy="24" r="15" fill="#050508"/>
-
-        <!-- City Silhouette -->
-        <g fill="#0D0D18" opacity="0.9">
-          <rect x="0" y="90" width="35" height="100"/>
-          <rect x="5" y="75" width="22" height="115"/>
-          <rect x="35" y="100" width="28" height="90"/>
-          <rect x="50" y="85" width="16" height="105"/>
-          <!-- windows -->
-          <g fill="rgba(255,220,100,0.35)">
-            <rect x="9" y="80" width="6" height="5" rx="1"/><rect x="18" y="80" width="6" height="5" rx="1"/>
-            <rect x="9" y="90" width="6" height="5" rx="1"/><rect x="18" y="90" width="6" height="5" rx="1"/>
-            <rect x="9" y="100" width="6" height="5" rx="1"/>
-            <rect x="37" y="107" width="6" height="5" rx="1"/><rect x="46" y="107" width="6" height="5" rx="1"/>
-          </g>
-          <!-- Right side buildings -->
-          <rect x="540" y="85" width="30" height="105"/><rect x="548" y="70" width="20" height="120"/>
-          <rect x="565" y="95" width="35" height="95"/>
-          <g fill="rgba(150,200,255,0.25)">
-            <rect x="551" y="75" width="5" height="5" rx="1"/><rect x="559" y="75" width="5" height="5" rx="1"/>
-            <rect x="551" y="85" width="5" height="5" rx="1"/>
-            <rect x="567" y="100" width="5" height="5" rx="1"/><rect x="576" y="100" width="5" height="5" rx="1"/>
-          </g>
-        </g>
-
-        <!-- Road -->
-        <path d="M0 165 L600 165 L600 220 L0 220Z" fill="#111"/>
-        <rect x="0" y="162" width="600" height="4" fill="#1a1a1a"/>
-        <!-- Road lines -->
-        <g fill="rgba(255,255,255,0.12)">
-          <rect x="70" y="188" width="45" height="5" rx="2.5"/>
-          <rect x="185" y="188" width="45" height="5" rx="2.5"/>
-          <rect x="300" y="188" width="45" height="5" rx="2.5"/>
-          <rect x="415" y="188" width="45" height="5" rx="2.5"/>
-          <rect x="530" y="188" width="45" height="5" rx="2.5"/>
-        </g>
-        <!-- Yellow center line -->
-        <g fill="rgba(255,200,50,0.2)">
-          <rect x="40" y="175" width="30" height="3" rx="1.5"/>
-          <rect x="140" y="175" width="30" height="3" rx="1.5"/>
-          <rect x="240" y="175" width="30" height="3" rx="1.5"/>
-          <rect x="340" y="175" width="30" height="3" rx="1.5"/>
-          <rect x="440" y="175" width="30" height="3" rx="1.5"/>
-          <rect x="540" y="175" width="30" height="3" rx="1.5"/>
-        </g>
-        <!-- Headlight glow -->
-        <ellipse cx="300" cy="166" rx="100" ry="20" fill="url(#head-glow)"/>
-
-        <!-- Main Car (Lamprell Red) -->
-        <g transform="translate(205 102)">
-          <!-- Body -->
-          <rect x="0" y="28" width="110" height="35" rx="6" fill="#CC0000"/>
-          <!-- Cabin -->
-          <rect x="14" y="8" width="82" height="30" rx="9" fill="#990000"/>
-          <!-- Windshield -->
-          <rect x="20" y="11" width="34" height="24" rx="4" fill="rgba(150,210,255,0.3)"/>
-          <!-- Rear window -->
-          <rect x="60" y="11" width="30" height="24" rx="4" fill="rgba(150,210,255,0.2)"/>
-          <!-- Wheels -->
-          <circle cx="18" cy="65" r="10" fill="#0a0a0a"/><circle cx="18" cy="65" r="6" fill="#1a1a1a"/><circle cx="18" cy="65" r="2.5" fill="#333"/>
-          <circle cx="92" cy="65" r="10" fill="#0a0a0a"/><circle cx="92" cy="65" r="6" fill="#1a1a1a"/><circle cx="92" cy="65" r="2.5" fill="#333"/>
-          <!-- Headlights -->
-          <rect x="-4" y="38" width="9" height="8" rx="2" fill="#FFE566"/>
-          <ellipse cx="-6" cy="42" rx="12" ry="6" fill="rgba(255,224,102,0.2)"/>
-          <!-- Taillights -->
-          <rect x="105" y="38" width="9" height="8" rx="2" fill="#FF2222"/>
-          <!-- Driver -->
-          <ellipse cx="38" cy="18" rx="9" ry="10" fill="#D4A574"/>
-          <!-- Seatbelt visible -->
-          <line x1="42" y1="12" x2="30" y2="30" stroke="rgba(0,192,122,0.7)" stroke-width="2.5" stroke-linecap="round"/>
-          <!-- HSE badge on door -->
-          <rect x="30" y="40" width="22" height="12" rx="3" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
-          <text x="41" y="49" text-anchor="middle" font-size="6" fill="rgba(255,255,255,0.6)" font-family="sans-serif" font-weight="bold">HSE</text>
-        </g>
-
-        <!-- Speed limit sign -->
-        <g transform="translate(80 95)">
-          <circle cx="20" cy="20" r="22" fill="rgba(204,0,0,0.15)" stroke="#CC0000" stroke-width="2"/>
-          <circle cx="20" cy="20" r="17" fill="rgba(8,8,15,0.8)"/>
-          <text x="20" y="26" text-anchor="middle" font-size="16" fill="#CC0000" font-weight="bold" font-family="sans-serif">60</text>
-          <line x1="20" y1="42" x2="20" y2="65" stroke="#444" stroke-width="3"/>
-        </g>
-
-        <!-- Street lamp -->
-        <line x1="500" y1="55" x2="500" y2="165" stroke="#2a2a3a" stroke-width="4"/>
-        <path d="M500 55 Q514 45 528 47" stroke="#2a2a3a" stroke-width="3.5" fill="none"/>
-        <circle cx="528" cy="47" r="7" fill="rgba(255,224,102,0.9)"/>
-        <ellipse cx="528" cy="54" rx="18" ry="8" fill="rgba(255,224,102,0.08)"/>
-
-        <!-- LAMPRELL watermark -->
-        <text x="300" y="215" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.08)" font-family="sans-serif" letter-spacing="5" font-weight="bold">LAMPRELL HSE</text>
-      </svg>
+function Stat({label,value,sub,color=C.navy,icon}){
+  return <div style={{background:C.white,border:"1px solid "+C.border,borderRadius:12,padding:"18px 20px"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+      <div>
+        <div style={{fontSize:12,color:C.textLt,marginBottom:8,fontWeight:500}}>{label}</div>
+        <div style={{fontSize:26,fontWeight:700,color}}>{value}</div>
+        {sub&&<div style={{fontSize:11,color:C.textLt,marginTop:4}}>{sub}</div>}
+      </div>
+      {icon&&<div style={{fontSize:26,opacity:0.6}}>{icon}</div>}
     </div>
+  </div>;
+}
 
-    <!-- Content -->
-    <div style="text-align:center">
-      <div class="campaign-pill"><div class="pulse-dot"></div><span id="i-badge">حملة السلامة المرورية</span></div>
-      <div class="intro-title" id="i-title">كل رحلة<br>تستحق <span>السلامة</span></div>
-      <div class="intro-sub" id="i-sub">نرفع وعي فريق Lamprell بأهمية القيادة الآمنة والمسؤولة على الطرق — لأن كل قرار تتخذه خلف المقود يمكن أن يُنقذ حياة.</div>
+function Empty({msg="لا توجد بيانات",icon="📭"}){
+  return <div style={{textAlign:"center",padding:"60px 20px",color:C.textLt}}>
+    <div style={{fontSize:40,marginBottom:12}}>{icon}</div>
+    <div style={{fontSize:14}}>{msg}</div>
+  </div>;
+}
+""")
+
+out.append(r"""
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────
+function Sidebar({view,setView,user,onLogout}){
+  const dept=getDept(user.department);
+  const nav=[
+    {id:"dashboard",icon:"🏠",label:"الرئيسية"},
+    {id:"procurement",icon:"🛒",label:"المشتريات",highlight:true},
+    {id:"tasks",icon:"✅",label:"المهام"},
+    {id:"announcements",icon:"📢",label:"الإعلانات"},
+    {id:"leaves",icon:"📅",label:"طلبات الإجازة"},
+    {id:"directory",icon:"👥",label:"الدليل الداخلي"},
+  ];
+  if(user.role==="admin"||user.role==="manager") nav.push({id:"admin",icon:"⚙️",label:"إدارة النظام"});
+  return(
+    <div style={{width:220,background:C.navy,minHeight:"100vh",display:"flex",flexDirection:"column",flexShrink:0,position:"sticky",top:0,height:"100vh",overflowY:"auto"}}>
+      <div style={{padding:"20px 16px 12px"}}>
+        <div style={{fontSize:10,color:"#4A6A8A",letterSpacing:"0.12em",marginBottom:4,textTransform:"uppercase",direction:"ltr"}}>LAMBRIEL KSA</div>
+        <div style={{fontSize:18,fontWeight:800,color:"#fff",letterSpacing:"0.02em"}}>لامبريل</div>
+        <div style={{fontSize:11,color:C.gold}}>الفرع السعودي</div>
+      </div>
+      <div style={{margin:"0 12px 12px",padding:"10px 12px",background:"rgba(255,255,255,0.06)",borderRadius:10,border:"1px solid rgba(255,255,255,0.08)"}}>
+        <div style={{fontSize:11,color:"#fff",fontWeight:600,marginBottom:2}}>{user.name}</div>
+        <div style={{fontSize:10,color:"#8AAFD4",marginBottom:4}}>{ROLES[user.role]} · {getDept(user.department).name}</div>
+        <span style={{display:"inline-block",background:dept.bg,color:dept.color,fontSize:10,fontWeight:700,padding:"1px 8px",borderRadius:12}}>{dept.short}</span>
+      </div>
+      <nav style={{flex:1,padding:"4px 10px"}}>
+        {nav.map(n=>{
+          const active=view===n.id;
+          return <button key={n.id} onClick={()=>setView(n.id)}
+            style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"9px 12px",borderRadius:9,border:"none",
+              background:active?"rgba(192,146,42,0.18)":n.highlight&&!active?"rgba(192,146,42,0.06)":"transparent",
+              color:active?C.gold:n.highlight?"#D4B060":"#8AAFD4",cursor:"pointer",fontSize:13,
+              fontWeight:active?700:400,marginBottom:2,textAlign:"right",transition:"all 0.14s"}}>
+            <span style={{fontSize:15,marginLeft:"auto"}}>{n.icon}</span>{n.label}
+            {active&&<div style={{width:3,height:20,background:C.gold,borderRadius:2,marginRight:"auto",marginLeft:0}}/>}
+          </button>;
+        })}
+      </nav>
+      <div style={{padding:"12px 10px",borderTop:"1px solid rgba(255,255,255,0.08)"}}>
+        <button onClick={onLogout} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",borderRadius:9,border:"none",background:"rgba(220,38,38,0.12)",color:"#F87171",cursor:"pointer",fontSize:13,fontWeight:600,textAlign:"right"}}>
+          <span style={{marginLeft:"auto"}}>🚪</span>تسجيل الخروج
+        </button>
+      </div>
     </div>
+  );
+}
 
-    <div class="chip-row" style="justify-content:center">
-      <div class="chip chip-red">⚡ <span id="i-c1">5 أسئلة تفاعلية</span></div>
-      <div class="chip">🎯 <span id="i-c2">صح / خطأ + اختيارات</span></div>
-      <div class="chip">⏱ <span id="i-c3">بدون ضغط وقت</span></div>
+function TopBar({title,subtitle,children}){
+  return(
+    <div style={{background:C.white,borderBottom:"1px solid "+C.border,padding:"14px 28px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div>
+        <div style={{fontSize:18,fontWeight:700,color:C.text}}>{title}</div>
+        {subtitle&&<div style={{fontSize:12,color:C.textLt,marginTop:2}}>{subtitle}</div>}
+      </div>
+      <div style={{display:"flex",gap:10,alignItems:"center"}}>{children}</div>
     </div>
+  );
+}
+""")
 
-    <button class="btn btn-red" onclick="startQuiz()" id="i-start">ابدأ الاختبار ←</button>
-    <button class="btn btn-outline" onclick="goTo('scr-tips')" id="i-tips">📋 نصائح القيادة الآمنة</button>
-  </div>
-</div>
-
-<!-- ══ TIPS ══ -->
-<div class="scr" id="scr-tips">
-  <div class="card scroll" style="max-width:560px">
-    <div class="card-shine"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800" id="t-title">🛡 نصائح القيادة الآمنة</div>
-      <button class="btn-ghost" onclick="goTo('scr-intro')" id="t-back" style="width:auto;padding:7px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px">رجوع</button>
-    </div>
-    <div id="tips-content"></div>
-    <button class="btn btn-red" onclick="startQuiz()" style="margin-top:16px" id="t-start">ابدأ الاختبار ←</button>
-  </div>
-</div>
-
-<!-- ══ QUIZ ══ -->
-<div class="scr" id="scr-quiz">
-  <div class="card card-wide scroll">
-    <div class="card-shine"></div>
-    <!-- Top bar -->
-    <div class="q-top">
-      <div style="flex:1">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--wd);letter-spacing:1px;text-transform:uppercase;margin-bottom:9px">
-          <span id="q-label"></span>
-          <span id="q-setname" style="color:var(--red)">Road Safety</span>
+out.append(r"""
+// ─── LOGIN ────────────────────────────────────────────────────────────────
+function LoginView({users,onLogin}){
+  const[user,setUser]=useState("");
+  const[pass,setPass]=useState("");
+  const[err,setErr]=useState("");
+  const[loading,setLoading]=useState(false);
+  const submit=(e)=>{
+    e.preventDefault();
+    if(!user||!pass){setErr("يرجى إدخال اسم المستخدم وكلمة المرور");return;}
+    setLoading(true);
+    setTimeout(()=>{
+      const u=users.find(x=>x.username===user.trim()&&x.password===pass&&x.active);
+      if(u){onLogin(u);}else{setErr("اسم المستخدم أو كلمة المرور غير صحيحة");}
+      setLoading(false);
+    },500);
+  };
+  return(
+    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#07152A 0%,#152E52 60%,#1E4A7A 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{width:"100%",maxWidth:400}}>
+        <div style={{textAlign:"center",marginBottom:32}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",letterSpacing:"0.2em",marginBottom:6,direction:"ltr"}}>LAMBRIEL CO. — KSA BRANCH</div>
+          <div style={{fontSize:36,fontWeight:800,color:"#fff",marginBottom:4}}>لامبريل</div>
+          <div style={{fontSize:14,color:C.gold}}>النظام الداخلي · الفرع السعودي</div>
         </div>
-        <div class="q-dots" id="q-dots"></div>
-      </div>
-      <div class="timer-wrap">
-        <svg width="58" height="58" viewBox="0 0 58 58">
-          <circle class="timer-bg" cx="29" cy="29" r="25"/>
-          <circle class="timer-fg" id="t-fg" cx="29" cy="29" r="25"/>
-        </svg>
-        <div class="timer-num" id="t-num">—</div>
-      </div>
-    </div>
-    <!-- Illustration -->
-    <div class="q-illus" id="q-illus"></div>
-    <!-- Badge -->
-    <div class="q-badge" id="q-badge"></div>
-    <!-- Question text -->
-    <div class="q-text" id="q-text"></div>
-    <!-- Options -->
-    <div id="q-opts"></div>
-  </div>
-</div>
-
-<!-- ══ RESULT ══ -->
-<div class="scr" id="scr-result">
-  <div class="card scroll" style="text-align:center;max-width:520px">
-    <div class="card-shine"></div>
-
-    <!-- Ring -->
-    <div class="result-ring-wrap">
-      <svg width="160" height="160" viewBox="0 0 160 160">
-        <circle class="rr-bg" cx="80" cy="80" r="70"/>
-        <circle class="rr-fg" id="rr-fg" cx="80" cy="80" r="70"/>
-      </svg>
-      <div class="rr-inner">
-        <div class="rr-score" id="r-score">0</div>
-        <div class="rr-denom" id="r-denom">/5</div>
+        <div style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",borderRadius:16,padding:32,border:"1px solid rgba(255,255,255,0.1)"}}>
+          <form onSubmit={submit}>
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.6)",marginBottom:6,fontWeight:500}}>اسم المستخدم</div>
+              <input value={user} onChange={e=>{setUser(e.target.value);setErr("");}} placeholder="example: ahmed.ali" autoComplete="username"
+                style={{width:"100%",padding:"11px 14px",background:"rgba(255,255,255,0.08)",border:"1.5px solid rgba(255,255,255,0.12)",borderRadius:9,fontSize:13,color:"#fff",outline:"none",direction:"ltr"}}
+                onFocus={e=>e.target.style.borderColor="rgba(192,146,42,0.6)"} onBlur={e=>e.target.style.borderColor="rgba(255,255,255,0.12)"}/>
+            </div>
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.6)",marginBottom:6,fontWeight:500}}>كلمة المرور</div>
+              <input type="password" value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} placeholder="••••••••" autoComplete="current-password"
+                style={{width:"100%",padding:"11px 14px",background:"rgba(255,255,255,0.08)",border:"1.5px solid rgba(255,255,255,0.12)",borderRadius:9,fontSize:13,color:"#fff",outline:"none",direction:"ltr"}}
+                onFocus={e=>e.target.style.borderColor="rgba(192,146,42,0.6)"} onBlur={e=>e.target.style.borderColor="rgba(255,255,255,0.12)"}/>
+            </div>
+            {err&&<div style={{background:"rgba(220,38,38,0.15)",border:"1px solid rgba(220,38,38,0.3)",borderRadius:8,padding:"10px 14px",fontSize:13,color:"#FCA5A5",marginBottom:16,textAlign:"center"}}>{err}</div>}
+            <button type="submit" disabled={loading} style={{width:"100%",padding:"12px",background:loading?C.gold+"99":C.gold,border:"none",borderRadius:9,fontSize:14,fontWeight:700,color:"#fff",cursor:loading?"default":"pointer",transition:"all 0.15s"}}>
+              {loading?"جاري الدخول...":"دخول إلى النظام"}
+            </button>
+          </form>
+          <div style={{marginTop:20,padding:"12px",background:"rgba(255,255,255,0.04)",borderRadius:8,fontSize:11,color:"rgba(255,255,255,0.4)",textAlign:"center",direction:"ltr",lineHeight:1.8}}>
+            admin / admin@2025 · ops.manager / 123456<br/>fin.manager · hr.manager · proj.manager / 123456
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+""")
 
-    <!-- Grade -->
-    <div class="result-grade" id="r-grade"></div>
-    <div style="font-size:13px;color:var(--wd);margin-bottom:20px" id="r-name"></div>
-
-    <!-- Stats -->
-    <div class="result-stats">
-      <div class="rs-pill"><div class="rs-val" id="r-correct">0</div><div class="rs-lbl" id="r-cl">صحيح</div></div>
-      <div class="rs-pill"><div class="rs-val" id="r-acc">0%</div><div class="rs-lbl" id="r-al">الدقة</div></div>
+out.append(r"""
+// ─── DASHBOARD ───────────────────────────────────────────────────────────
+function Dashboard({user,procurement,tasks,announcements,leaves,setView}){
+  const myPR=procurement.filter(p=>user.role==="admin"?true:user.role==="manager"?p.department===user.department:p.requestedBy===user.id);
+  const myTasks=tasks.filter(t=>t.assignedTo===user.id||t.assignedBy===user.id);
+  const pendingPR=myPR.filter(p=>p.status==="pending").length;
+  const pendingLeave=leaves.filter(l=>l.status==="pending"&&(user.role==="admin"||(user.role==="manager"&&leaves.find(x=>x.id===l.id)?.userId!==user.id))).length;
+  const myTasksDue=myTasks.filter(t=>t.status!=="completed"&&t.status!=="cancelled").length;
+  const todayAnn=announcements.filter(a=>a.departments.includes("all")||a.departments.includes(user.department));
+  return(
+    <div className="fade" style={{padding:28,maxWidth:1100,margin:"0 auto"}}>
+      <div style={{marginBottom:22,padding:"18px 22px",background:"linear-gradient(135deg,#07152A,#1E4A7A)",borderRadius:14,color:"#fff"}}>
+        <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",marginBottom:4}}>مرحباً بك في نظام لامبريل الداخلي</div>
+        <div style={{fontSize:20,fontWeight:700}}>أهلاً، {user.name} 👋</div>
+        <div style={{fontSize:12,color:C.gold,marginTop:4}}>{user.position} · {getDept(user.department).name}</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:22}}>
+        <Stat label="طلبات مشتريات معلقة" value={pendingPR} color={pendingPR>0?C.yellow:C.green} icon="🛒" sub="تحتاج إجراء"/>
+        <Stat label="مهامي النشطة" value={myTasksDue} color={C.blue} icon="✅" sub="مهمة قيد التنفيذ"/>
+        <Stat label="طلبات إجازة معلقة" value={pendingLeave} color={pendingLeave>0?C.yellow:C.green} icon="📅" sub={user.role!=="employee"?"تنتظر موافقتك":"طلباتي"}/>
+        <Stat label="إعلانات اليوم" value={todayAnn.length} color={C.navy} icon="📢" sub="إعلان نشط"/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:18}}>
+        <Card style={{padding:0,overflow:"hidden"}}>
+          <div style={{padding:"14px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontSize:14,fontWeight:700}}>🛒 آخر طلبات المشتريات</div>
+            <Btn size="sm" variant="ghost" onClick={()=>setView("procurement")}>عرض الكل</Btn>
+          </div>
+          {myPR.length===0?<Empty msg="لا توجد طلبات بعد"/>:
+          <table style={{width:"100%"}}>
+            <thead><tr style={{background:C.bg}}>{["رقم الطلب","العنوان","القسم","الأولوية","الحالة"].map(h=><th key={h} style={{padding:"9px 14px",fontSize:11,fontWeight:700,color:C.textLt,textAlign:"right",borderBottom:"1px solid "+C.border}}>{h}</th>)}</tr></thead>
+            <tbody>{myPR.slice(0,5).map(p=>(
+              <tr key={p.id} style={{borderBottom:"1px solid "+C.border}}>
+                <td style={{padding:"10px 14px",fontSize:12,color:C.blue,fontWeight:600,direction:"ltr"}}>{p.number}</td>
+                <td style={{padding:"10px 14px",fontSize:13,fontWeight:500}}>{p.title}</td>
+                <td style={{padding:"10px 14px"}}><Badge label={getDept(p.department).name} color={getDept(p.department).color} bg={getDept(p.department).bg} size={11}/></td>
+                <td style={{padding:"10px 14px",fontSize:12,color:p.priority==="urgent"?C.red:p.priority==="low"?C.textLt:C.textMd}}>{p.priority==="urgent"?"⚡ عاجل":p.priority==="low"?"منخفضة":"عادية"}</td>
+                <td style={{padding:"10px 14px"}}><StatusBadge status={p.status} map={PR_STATUS}/></td>
+              </tr>
+            ))}</tbody>
+          </table>}
+        </Card>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <Card style={{padding:0,overflow:"hidden",flex:1}}>
+            <div style={{padding:"14px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontSize:14,fontWeight:700}}>📢 الإعلانات</div>
+              <Btn size="sm" variant="ghost" onClick={()=>setView("announcements")}>الكل</Btn>
+            </div>
+            <div style={{padding:"8px 0"}}>
+              {todayAnn.length===0?<div style={{padding:"16px",fontSize:13,color:C.textLt,textAlign:"center"}}>لا توجد إعلانات</div>:
+              todayAnn.slice(0,4).map(a=><div key={a.id} style={{padding:"10px 18px",borderBottom:"1px solid "+C.border}}>
+                {a.priority==="urgent"&&<span style={{fontSize:10,background:C.redBg,color:C.red,padding:"1px 7px",borderRadius:10,marginBottom:4,display:"inline-block"}}>⚡ عاجل</span>}
+                <div style={{fontSize:13,fontWeight:600,color:C.text}}>{a.title}</div>
+                <div style={{fontSize:11,color:C.textLt,marginTop:2}}>{fmt(a.date)}</div>
+              </div>)}
+            </div>
+          </Card>
+          <Card style={{padding:16}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>⚡ الإجراءات السريعة</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <Btn full variant="gold" onClick={()=>setView("procurement")} icon="🛒">طلب مشتريات جديد</Btn>
+              <Btn full variant="ghost" onClick={()=>setView("tasks")} icon="✅">مهمة جديدة</Btn>
+              <Btn full variant="ghost" onClick={()=>setView("leaves")} icon="📅">طلب إجازة</Btn>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
+  );
+}
+""")
 
-    <!-- Message -->
-    <div class="result-msg" id="r-msg"></div>
+out.append(r"""
+// ─── PROCUREMENT ─────────────────────────────────────────────────────────
+function ProcurementView({user,procurement,setProcurement,users}){
+  const[tab,setTab]=useState("list");
+  const[filter,setFilter]=useState("all");
+  const[deptFilter,setDeptFilter]=useState("all");
+  const[search,setSearch]=useState("");
+  const[selected,setSelected]=useState(null);
+  const[showNew,setShowNew]=useState(false);
+  const[showApprove,setShowApprove]=useState(null);
 
-    <!-- Certificate card -->
-    <div class="cert-card">
-      <div style="font-size:10px;color:var(--red);letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:10px">🏅 شهادة مشاركة</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px" id="cert-name">—</div>
-      <div style="font-size:12px;color:var(--wd)" id="cert-date">—</div>
+  const visiblePR=useMemo(()=>{
+    let list=procurement;
+    if(user.role==="employee") list=list.filter(p=>p.requestedBy===user.id);
+    else if(user.role==="manager"&&user.department!=="finance") list=list.filter(p=>p.department===user.department||p.requestedBy===user.id);
+    if(filter!=="all") list=list.filter(p=>p.status===filter);
+    if(deptFilter!=="all") list=list.filter(p=>p.department===deptFilter);
+    if(search) list=list.filter(p=>p.title.includes(search)||p.number.includes(search));
+    return list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  },[procurement,user,filter,deptFilter,search]);
+
+  const stats={
+    total:visiblePR.length,
+    pending:visiblePR.filter(p=>p.status==="pending").length,
+    approved:visiblePR.filter(p=>p.status==="approved").length,
+    completed:visiblePR.filter(p=>p.status==="completed").length,
+  };
+
+  const canApprove=(pr)=>{
+    if(user.role==="admin") return pr.status==="pending"||pr.status==="approved";
+    if(user.role==="manager"&&user.department===pr.department&&pr.status==="pending") return true;
+    if(user.role==="manager"&&user.department==="finance"&&pr.status==="approved") return true;
+    return false;
+  };
+
+  const handleApprove=(pr,action,note)=>{
+    setProcurement(list=>list.map(p=>{
+      if(p.id!==pr.id) return p;
+      let newStatus=action==="approve"?(p.status==="pending"?"approved":"processing"):action==="complete"?"completed":"rejected";
+      return{...p,status:newStatus,approvals:[...p.approvals,{by:user.id,role:user.position,action:action==="approve"?"approved":action==="complete"?"completed":"rejected",date:today(),note:note||""}]};
+    }));
+    setShowApprove(null);
+    if(selected?.id===pr.id) setSelected(prev=>({...prev,status:action==="approve"?(prev.status==="pending"?"approved":"processing"):action==="complete"?"completed":"rejected"}));
+  };
+
+  if(selected) return <PRDetail pr={selected} users={users} user={user} canApprove={canApprove(selected)}
+    onBack={()=>setSelected(null)} onApprove={(a,n)=>handleApprove(selected,a,n)}/>;
+
+  return(
+    <div className="fade" style={{padding:28,maxWidth:1100,margin:"0 auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div>
+          <div style={{fontSize:20,fontWeight:700}}>🛒 إدارة المشتريات</div>
+          <div style={{fontSize:13,color:C.textLt,marginTop:3}}>تقديم ومتابعة طلبات الشراء والتوريد</div>
+        </div>
+        <Btn variant="gold" icon="➕" onClick={()=>setShowNew(true)}>طلب مشتريات جديد</Btn>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:22}}>
+        <Stat label="إجمالي الطلبات" value={stats.total} icon="📋"/>
+        <Stat label="معلقة" value={stats.pending} color={stats.pending>0?C.yellow:C.green} icon="⏳"/>
+        <Stat label="موافق عليها" value={stats.approved} color={C.green} icon="✅"/>
+        <Stat label="مكتملة" value={stats.completed} color={C.gray} icon="🏁"/>
+      </div>
+
+      <Card style={{padding:16,marginBottom:16}}>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  بحث برقم أو عنوان الطلب..."
+            style={{flex:1,minWidth:200,padding:"8px 12px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,outline:"none"}}/>
+          <select value={filter} onChange={e=>setFilter(e.target.value)}
+            style={{padding:"8px 12px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,background:C.white}}>
+            <option value="all">كل الحالات</option>
+            {Object.entries(PR_STATUS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+          </select>
+          {(user.role==="admin"||(user.role==="manager"&&user.department==="finance"))&&
+          <select value={deptFilter} onChange={e=>setDeptFilter(e.target.value)}
+            style={{padding:"8px 12px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,background:C.white}}>
+            <option value="all">كل الأقسام</option>
+            {DEPTS.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>}
+        </div>
+      </Card>
+
+      <Card style={{padding:0,overflow:"hidden"}}>
+        {visiblePR.length===0?<Empty msg="لا توجد طلبات مطابقة" icon="🔍"/>:
+        <table>
+          <thead><tr style={{background:C.bg}}>
+            {["رقم الطلب","العنوان","القسم","مقدم الطلب","التاريخ","الأولوية","التقدير المالي","الحالة","إجراء"].map(h=>
+              <th key={h} style={{padding:"10px 14px",fontSize:11,fontWeight:700,color:C.textLt,textAlign:"right",borderBottom:"1px solid "+C.border,whiteSpace:"nowrap"}}>{h}</th>)}
+          </tr></thead>
+          <tbody>{visiblePR.map((p,i)=>{
+            const req=users.find(u=>u.id===p.requestedBy);
+            return <tr key={p.id} style={{borderBottom:"1px solid "+C.border,background:i%2===0?"#fff":C.bg+"55"}}
+              onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background=i%2===0?"#fff":C.bg+"55"}>
+              <td style={{padding:"11px 14px",fontSize:12,color:C.blue,fontWeight:700,direction:"ltr",cursor:"pointer"}} onClick={()=>setSelected(p)}>{p.number}</td>
+              <td style={{padding:"11px 14px",fontSize:13,fontWeight:500,cursor:"pointer",maxWidth:200}} onClick={()=>setSelected(p)}>
+                <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
+              </td>
+              <td style={{padding:"11px 14px"}}><Badge label={getDept(p.department).name} color={getDept(p.department).color} bg={getDept(p.department).bg} size={11}/></td>
+              <td style={{padding:"11px 14px",fontSize:12,color:C.textMd}}>{req?.name||"—"}</td>
+              <td style={{padding:"11px 14px",fontSize:12,color:C.textLt,whiteSpace:"nowrap"}}>{fmt(p.requestDate)}</td>
+              <td style={{padding:"11px 14px",fontSize:12,fontWeight:600,color:p.priority==="urgent"?C.red:p.priority==="low"?C.textLt:C.textMd}}>
+                {p.priority==="urgent"?"⚡ عاجل":p.priority==="low"?"منخفضة":"عادية"}
+              </td>
+              <td style={{padding:"11px 14px",fontSize:13,fontWeight:600,direction:"ltr",textAlign:"left"}}>{fmtNum(p.totalEstimated)} ﷼</td>
+              <td style={{padding:"11px 14px"}}><StatusBadge status={p.status} map={PR_STATUS}/></td>
+              <td style={{padding:"11px 14px"}}>
+                {canApprove(p)&&<div style={{display:"flex",gap:5}}>
+                  <Btn size="sm" variant="success" onClick={()=>setShowApprove({pr:p,action:p.status==="approved"?"complete":"approve"})}>
+                    {p.status==="approved"?"إتمام":"موافقة"}
+                  </Btn>
+                  <Btn size="sm" variant="danger" onClick={()=>setShowApprove({pr:p,action:"reject"})}>رفض</Btn>
+                </div>}
+              </td>
+            </tr>;
+          })}</tbody>
+        </table>}
+      </Card>
+
+      {showNew&&<NewPRModal user={user} onClose={()=>setShowNew(false)} onSave={pr=>{setProcurement(l=>[pr,...l]);setShowNew(false);}}/>}
+      {showApprove&&<ApproveModal data={showApprove} onClose={()=>setShowApprove(null)} onConfirm={(n)=>handleApprove(showApprove.pr,showApprove.action,n)}/>}
     </div>
-
-    <!-- Tips reminder -->
-    <div class="tips-strip" id="r-tips"></div>
-
-    <button class="btn btn-red" onclick="location.reload()" id="r-restart">إعادة المحاولة ↺</button>
-    <button class="btn btn-outline" onclick="shareResult()" id="r-share">📤 مشاركة النتيجة</button>
-  </div>
-</div>
-
-</main>
-
-<footer>
-  <div class="ft-brand">LAMPRELL · Road Safety</div>
-  <div class="ft-credit">h.al-hzem</div>
-</footer>
-
-<script>
-/* ══════════════════════════════════════════════════════
-   QUESTIONS DATA
-══════════════════════════════════════════════════════ */
-const Q = [
-  // Q1 — True/False
-  {
-    type:'tf',
-    cat:{ ar:'صح أم خطأ', en:'True or False' },
-    q:{
-      ar:'يُسمح باستخدام الهاتف أثناء القيادة طالما كانت المكالمة قصيرة والطريق مفتوحاً.',
-      en:'Using a phone while driving is acceptable if the call is brief and the road is clear.'
-    },
-    correct:1,
-    explain:{
-      ar:'أي استخدام للهاتف أثناء القيادة يُقلل انتباهك بنسبة 37% ويرفع خطر الحوادث 4 أضعاف — حتى لو الطريق فارغاً.',
-      en:'Any phone use while driving reduces your attention by 37% and quadruples accident risk — even on an empty road.'
-    },
-    illus:`<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-      <defs>
-        <radialGradient id="danger-glow" cx="40%" cy="50%" r="40%">
-          <stop offset="0%" stop-color="rgba(255,59,59,0.15)"/><stop offset="100%" stop-color="transparent"/>
-        </radialGradient>
-      </defs>
-      <rect width="560" height="200" fill="#0c0c14"/>
-      <!-- road -->
-      <rect x="0" y="130" width="560" height="70" fill="#0f0f0f"/>
-      <rect x="0" y="128" width="560" height="4" fill="#1a1a1a"/>
-      <g fill="rgba(255,255,255,0.09)">
-        <rect x="80" y="158" width="40" height="5" rx="2.5"/>
-        <rect x="200" y="158" width="40" height="5" rx="2.5"/>
-        <rect x="320" y="158" width="40" height="5" rx="2.5"/>
-        <rect x="440" y="158" width="40" height="5" rx="2.5"/>
-      </g>
-      <!-- danger zone -->
-      <ellipse cx="220" cy="120" rx="140" ry="80" fill="url(#danger-glow)"/>
-      <!-- car -->
-      <g transform="translate(130 78)">
-        <rect x="0" y="22" width="100" height="30" rx="5" fill="#1a1a2e"/>
-        <rect x="14" y="6" width="72" height="26" rx="7" fill="#141428"/>
-        <rect x="18" y="8" width="26" height="18" rx="3" fill="rgba(150,180,255,0.2)"/>
-        <rect x="50" y="8" width="26" height="18" rx="3" fill="rgba(150,180,255,0.2)"/>
-        <circle cx="16" cy="54" r="9" fill="#0a0a0a"/><circle cx="84" cy="54" r="9" fill="#0a0a0a"/>
-        <rect x="-4" y="30" width="8" height="6" rx="2" fill="#FFE566"/>
-        <rect x="96" y="30" width="8" height="6" rx="2" fill="#FF4444"/>
-        <!-- driver distracted -->
-        <ellipse cx="34" cy="15" rx="9" ry="10" fill="#D4A574"/>
-        <!-- phone screen glow on face -->
-        <ellipse cx="34" cy="14" rx="8" ry="7" fill="rgba(30,140,255,0.25)"/>
-        <!-- phone -->
-        <rect x="26" y="7" width="11" height="16" rx="2.5" fill="#0066DD"/>
-        <rect x="27" y="8" width="9" height="14" rx="2" fill="#1A90FF" opacity=".9"/>
-        <rect x="28" y="9" width="7" height="2" rx="1" fill="rgba(255,255,255,0.4)"/>
-        <rect x="28" y="12" width="5" height="1.5" rx=".75" fill="rgba(255,255,255,0.25)"/>
-      </g>
-      <!-- distracted path - swerving -->
-      <path d="M50 170 Q130 155 190 168 Q250 181 310 165 Q360 152 400 172" stroke="rgba(255,59,59,0.4)" stroke-width="2" fill="none" stroke-dasharray="6,5"/>
-      <!-- warning circle -->
-      <circle cx="420" cy="75" r="35" fill="rgba(204,0,0,0.1)" stroke="#CC0000" stroke-width="2"/>
-      <line x1="406" y1="61" x2="434" y2="89" stroke="#CC0000" stroke-width="5" stroke-linecap="round"/>
-      <line x1="434" y1="61" x2="406" y2="89" stroke="#CC0000" stroke-width="5" stroke-linecap="round"/>
-      <text x="420" y="125" text-anchor="middle" fill="#CC0000" font-size="11" font-weight="bold" font-family="sans-serif" letter-spacing="1">NO PHONE</text>
-      <text x="420" y="47" text-anchor="middle" font-size="18">📵</text>
-    </svg>`
-  },
-
-  // Q2 — MCQ
-  {
-    type:'mc',
-    cat:{ ar:'اختيار من متعدد', en:'Multiple Choice' },
-    q:{
-      ar:'ما معنى "قاعدة الثلاث ثوانٍ" في القيادة الآمنة؟',
-      en:'What does the "3-Second Rule" mean in safe driving?'
-    },
-    opts:{
-      ar:['التوقف ثلاث ثوانٍ عند كل إشارة', 'الحفاظ على مسافة ثلاث ثوانٍ على الأقل من المركبة الأمامية', 'أخذ استراحة كل ثلاث ساعات من القيادة'],
-      en:['Stop for 3 seconds at every signal', 'Keep at least 3 seconds gap from the vehicle ahead', 'Take a break every 3 hours of driving']
-    },
-    correct:1,
-    explain:{
-      ar:'اختر نقطة ثابتة على الطريق — عدّ ثلاث ثوانٍ بينك وبين المركبة الأمامية. في المطر أو الليل أو التعب زدها إلى 4-6 ثوانٍ.',
-      en:'Pick a fixed point — count 3 seconds between you and the vehicle ahead. In rain, dark or fatigue, increase to 4-6 seconds.'
-    },
-    illus:`<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-      <rect width="560" height="200" fill="#0c0c14"/>
-      <rect x="0" y="125" width="560" height="75" fill="#0f0f0f"/>
-      <rect x="0" y="122" width="560" height="4" fill="#1a1a1a"/>
-      <g fill="rgba(255,255,255,0.09)">
-        <rect x="100" y="152" width="40" height="5" rx="2.5"/>
-        <rect x="230" y="152" width="40" height="5" rx="2.5"/>
-        <rect x="360" y="152" width="40" height="5" rx="2.5"/>
-        <rect x="480" y="152" width="40" height="5" rx="2.5"/>
-      </g>
-      <!-- Car 1 (front) blue -->
-      <g transform="translate(40 80)">
-        <rect x="0" y="20" width="90" height="28" rx="5" fill="#1a3a5c"/>
-        <rect x="12" y="5" width="66" height="25" rx="7" fill="#142a42"/>
-        <rect x="16" y="7" width="24" height="18" rx="3" fill="rgba(150,200,255,0.25)"/>
-        <rect x="46" y="7" width="24" height="18" rx="3" fill="rgba(150,200,255,0.25)"/>
-        <circle cx="16" cy="50" r="8" fill="#0a0a0a"/><circle cx="74" cy="50" r="8" fill="#0a0a0a"/>
-        <rect x="-3" y="27" width="7" height="5" rx="1.5" fill="#FFE566"/>
-        <rect x="86" y="27" width="7" height="5" rx="1.5" fill="#FF4444"/>
-        <!-- driver -->
-        <ellipse cx="30" cy="13" rx="8" ry="9" fill="#C49060"/>
-        <!-- seatbelt -->
-        <line x1="34" y1="7" x2="24" y2="24" stroke="rgba(0,192,122,.6)" stroke-width="2" stroke-linecap="round"/>
-      </g>
-      <!-- 3 second gap annotation -->
-      <g>
-        <line x1="130" y1="100" x2="340" y2="100" stroke="rgba(0,192,122,0.5)" stroke-width="2" stroke-dasharray="6,5"/>
-        <polygon points="340,97 354,100 340,103" fill="rgba(0,192,122,0.7)"/>
-        <polygon points="130,97 116,100 130,103" fill="rgba(0,192,122,0.7)"/>
-        <rect x="183" y="85" width="114" height="30" rx="9" fill="rgba(0,192,122,0.1)" stroke="rgba(0,192,122,0.3)" stroke-width="1"/>
-        <text x="240" y="104" text-anchor="middle" fill="#00C07A" font-size="13" font-weight="bold" font-family="sans-serif">3  SECONDS  ✓</text>
-      </g>
-      <!-- Car 2 (back) Lamprell red -->
-      <g transform="translate(340 80)">
-        <rect x="0" y="20" width="90" height="28" rx="5" fill="#CC0000"/>
-        <rect x="12" y="5" width="66" height="25" rx="7" fill="#990000"/>
-        <rect x="16" y="7" width="24" height="18" rx="3" fill="rgba(150,200,255,0.25)"/>
-        <rect x="46" y="7" width="24" height="18" rx="3" fill="rgba(150,200,255,0.25)"/>
-        <circle cx="16" cy="50" r="8" fill="#0a0a0a"/><circle cx="74" cy="50" r="8" fill="#0a0a0a"/>
-        <rect x="-3" y="27" width="7" height="5" rx="1.5" fill="#FFE566"/>
-        <ellipse cx="-8" cy="30" rx="14" ry="7" fill="rgba(255,224,102,0.12)"/>
-        <ellipse cx="-8" cy="30" rx="9" ry="4" fill="rgba(255,224,102,0.1)"/>
-        <!-- driver -->
-        <ellipse cx="30" cy="13" rx="8" ry="9" fill="#D4A574"/>
-        <line x1="34" y1="7" x2="24" y2="24" stroke="rgba(0,192,122,.6)" stroke-width="2" stroke-linecap="round"/>
-      </g>
-      <text x="280" y="190" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="10" font-family="sans-serif">Safe Following Distance — قاعدة الثلاث ثوانٍ</text>
-    </svg>`
-  },
-
-  // Q3 — True/False
-  {
-    type:'tf',
-    cat:{ ar:'صح أم خطأ', en:'True or False' },
-    q:{
-      ar:'حزام الأمان في المقاعد الخلفية اختياري لأن خطر الإصابة أقل.',
-      en:'Rear seat belts are optional because injury risk is lower in the back.'
-    },
-    correct:1,
-    explain:{
-      ar:'ركاب المقاعد الخلفية غير المربوطين يُصبحون "قذائف" تصطدم بمن في الأمام بقوة تصل لـ50 ضعف وزنهم. الحزام إلزامي للجميع دائماً.',
-      en:'Unbelted rear passengers become projectiles striking front occupants with up to 50x their body weight. Belts are mandatory for ALL at ALL times.'
-    },
-    illus:`<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-      <rect width="560" height="200" fill="#0c0c14"/>
-      <!-- car body top view cross-section -->
-      <rect x="90" y="28" width="380" height="150" rx="22" fill="#141428" stroke="#222" stroke-width="2"/>
-      <!-- windshield -->
-      <rect x="140" y="36" width="280" height="80" rx="12" fill="rgba(150,200,255,0.05)" stroke="#2a2a40" stroke-width="1.5"/>
-      <!-- door divider -->
-      <line x1="280" y1="48" x2="280" y2="160" stroke="#1e1e2e" stroke-width="3"/>
-      <!-- ── Front Left (seatbelt ON) ── -->
-      <g transform="translate(135 42)">
-        <ellipse cx="42" cy="20" rx="18" ry="20" fill="#D4A574"/>
-        <rect x="22" y="40" width="40" height="55" rx="9" fill="#2a3a5c"/>
-        <line x1="55" y1="40" x2="28" y2="80" stroke="#00C07A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="28" y1="68" x2="62" y2="68" stroke="#00C07A" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="42" cy="100" r="12" fill="rgba(0,192,122,0.12)" stroke="#00C07A" stroke-width="1.5"/>
-        <text x="42" y="105" text-anchor="middle" fill="#00C07A" font-size="14">✓</text>
-      </g>
-      <!-- ── Front Right (seatbelt ON) ── -->
-      <g transform="translate(300 42)">
-        <ellipse cx="42" cy="20" rx="18" ry="20" fill="#C49060"/>
-        <rect x="22" y="40" width="40" height="55" rx="9" fill="#2a2a3c"/>
-        <line x1="55" y1="40" x2="28" y2="80" stroke="#00C07A" stroke-width="4" stroke-linecap="round"/>
-        <line x1="28" y1="68" x2="62" y2="68" stroke="#00C07A" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="42" cy="100" r="12" fill="rgba(0,192,122,0.12)" stroke="#00C07A" stroke-width="1.5"/>
-        <text x="42" y="105" text-anchor="middle" fill="#00C07A" font-size="14">✓</text>
-      </g>
-      <!-- labels -->
-      <text x="170" y="168" text-anchor="middle" fill="rgba(0,192,122,0.7)" font-size="10" font-weight="bold" font-family="sans-serif">BELTED ✓</text>
-      <text x="340" y="168" text-anchor="middle" fill="rgba(0,192,122,0.7)" font-size="10" font-weight="bold" font-family="sans-serif">BELTED ✓</text>
-      <text x="280" y="192" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="10" font-family="sans-serif">ALL PASSENGERS · ALL TIMES · كل الركاب · في كل الأوقات</text>
-    </svg>`
-  },
-
-  // Q4 — MCQ
-  {
-    type:'mc',
-    cat:{ ar:'اختيار من متعدد', en:'Multiple Choice' },
-    q:{
-      ar:'شعرت بنعاس شديد أثناء قيادتك على الطريق السريع. ما أفضل تصرف؟',
-      en:'You feel extreme drowsiness while driving on the highway. What is the best action?'
-    },
-    opts:{
-      ar:['فتح النافذة وتشغيل الموسيقى والاستمرار', 'الخروج بأمان عند أقرب استراحة والنوم 20 دقيقة', 'شرب مشروب طاقة والاستمرار بسرعة أقل'],
-      en:['Open window, play loud music and continue', 'Exit safely at nearest rest stop and sleep 20 minutes', 'Drink energy drink and slow down']
-    },
-    correct:1,
-    explain:{
-      ar:'نوم 20 دقيقة (Power Nap) هو الحل الوحيد الفعّال. فتح النوافذ والموسيقى لا تؤجّل النعاس أكثر من دقائق — وتلك الدقائق قد تكون قاتلة.',
-      en:'A 20-min power nap is the only truly effective solution. Windows and music delay drowsiness by minutes only — and those minutes can be fatal.'
-    },
-    illus:`<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-      <defs>
-        <radialGradient id="fg2" cx="35%" cy="50%" r="40%">
-          <stop offset="0%" stop-color="rgba(245,158,11,0.15)"/><stop offset="100%" stop-color="transparent"/>
-        </radialGradient>
-      </defs>
-      <rect width="560" height="200" fill="#0c0c14"/>
-      <rect x="0" y="128" width="560" height="72" fill="#0f0f0f"/>
-      <rect x="0" y="125" width="560" height="4" fill="#1a1a1a"/>
-      <ellipse cx="200" cy="120" rx="180" ry="80" fill="url(#fg2)"/>
-      <!-- Tired car swerving -->
-      <g transform="translate(160 70)">
-        <rect x="0" y="28" width="100" height="30" rx="5" fill="#1a1a2e"/>
-        <rect x="14" y="12" width="72" height="26" rx="7" fill="#141428"/>
-        <ellipse cx="34" cy="22" rx="11" ry="12" fill="#D4A574" transform="rotate(18,34,22)"/>
-        <!-- closed tired eyes -->
-        <line x1="28" y1="20" x2="34" y2="21" stroke="#8B5A2B" stroke-width="2" stroke-linecap="round"/>
-        <line x1="37" y1="20" x2="32" y2="21" stroke="#8B5A2B" stroke-width="2" stroke-linecap="round"/>
-        <!-- ZZZ -->
-        <text x="58" y="14" fill="rgba(245,158,11,0.9)" font-size="10" font-weight="bold" font-family="sans-serif">z</text>
-        <text x="65" y="8"  fill="rgba(245,158,11,0.9)" font-size="13" font-weight="bold" font-family="sans-serif">z</text>
-        <text x="75" y="2"  fill="rgba(245,158,11,0.9)" font-size="16" font-weight="bold" font-family="sans-serif">Z</text>
-        <circle cx="14" cy="60" r="8" fill="#0a0a0a"/><circle cx="86" cy="60" r="8" fill="#0a0a0a"/>
-        <rect x="-3" y="36" width="7" height="5" rx="2" fill="#FFE566"/>
-        <rect x="96" y="36" width="7" height="5" rx="2" fill="#FF8888"/>
-      </g>
-      <!-- swerve track -->
-      <path d="M50 155 Q130 140 195 153 Q260 167 320 150 Q380 135 440 158 Q480 168 520 155" stroke="rgba(245,158,11,0.3)" stroke-width="2.5" fill="none" stroke-dasharray="6,5"/>
-      <!-- Rest stop sign -->
-      <g transform="translate(400 38)">
-        <rect width="100" height="68" rx="10" fill="rgba(0,192,122,0.08)" stroke="rgba(0,192,122,0.35)" stroke-width="1.5"/>
-        <text x="50" y="26" text-anchor="middle" fill="#00C07A" font-size="16">😴</text>
-        <text x="50" y="42" text-anchor="middle" fill="#00C07A" font-size="10" font-weight="bold" font-family="sans-serif">REST STOP</text>
-        <text x="50" y="58" text-anchor="middle" fill="rgba(0,192,122,0.6)" font-size="9" font-family="sans-serif">20-min power nap</text>
-      </g>
-      <text x="280" y="192" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-size="10" font-family="sans-serif">Drowsy driving is as dangerous as drunk driving</text>
-    </svg>`
-  },
-
-  // Q5 — MCQ
-  {
-    type:'mc',
-    cat:{ ar:'اختيار من متعدد', en:'Multiple Choice' },
-    q:{
-      ar:'عند القيادة في منطقة سكنية مزدحمة، ما الممارسة الصحيحة؟',
-      en:'When driving through a busy residential area, what is the correct practice?'
-    },
-    opts:{
-      ar:['مواكبة سرعة السيارات المحيطة مهما كانت', 'تخفيض السرعة والاستعداد للتوقف الفوري في أي لحظة', 'استخدام المنبه للتحذير من وجودك'],
-      en:['Match surrounding traffic speed, whatever it is', 'Slow down and be ready to stop instantly at any moment', 'Use the horn to warn others of your presence']
-    },
-    correct:1,
-    explain:{
-      ar:'المناطق السكنية = أطفال، مشاة، دراجات — قد يظهرون فجأة من أي اتجاه. تخفيض السرعة والاستعداد التام للتوقف هو الأساس.',
-      en:'Residential areas = children, pedestrians, cyclists — they can appear suddenly from any direction. Slowing down and full readiness to stop is the fundamental rule.'
-    },
-    illus:`<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-      <rect width="560" height="200" fill="#0c0c14"/>
-      <!-- sidewalks -->
-      <rect x="90" y="0" width="50" height="200" fill="#1a1a22"/>
-      <rect x="420" y="0" width="50" height="200" fill="#1a1a22"/>
-      <!-- road -->
-      <rect x="140" y="0" width="280" height="200" fill="#0f0f0f"/>
-      <!-- road markings -->
-      <g fill="rgba(255,255,255,0.08)">
-        <rect x="273" y="15" width="14" height="30" rx="3"/><rect x="273" y="60" width="14" height="30" rx="3"/>
-        <rect x="273" y="105" width="14" height="30" rx="3"/><rect x="273" y="150" width="14" height="30" rx="3"/>
-      </g>
-      <!-- Buildings left -->
-      <rect x="0" y="10" width="85" height="190" fill="#14141F" stroke="#1e1e2e" stroke-width="1"/>
-      <g fill="rgba(255,220,100,0.25)">
-        <rect x="10" y="20" width="18" height="15" rx="2"/><rect x="34" y="20" width="18" height="15" rx="2"/>
-        <rect x="58" y="20" width="18" height="15" rx="2"/>
-        <rect x="10" y="48" width="18" height="15" rx="2"/><rect x="34" y="48" width="18" height="15" rx="2"/>
-        <rect x="10" y="76" width="18" height="15" rx="2"/>
-      </g>
-      <!-- Buildings right -->
-      <rect x="475" y="10" width="85" height="190" fill="#14141F" stroke="#1e1e2e" stroke-width="1"/>
-      <g fill="rgba(150,200,255,0.2)">
-        <rect x="480" y="20" width="18" height="15" rx="2"/><rect x="504" y="20" width="18" height="15" rx="2"/>
-        <rect x="528" y="20" width="18" height="15" rx="2"/>
-        <rect x="480" y="48" width="18" height="15" rx="2"/><rect x="504" y="48" width="18" height="15" rx="2"/>
-      </g>
-      <!-- Pedestrian crossing -->
-      <g fill="rgba(255,255,255,0.12)">
-        <rect x="148" y="92" width="22" height="8" rx="2"/><rect x="175" y="92" width="22" height="8" rx="2"/>
-        <rect x="202" y="92" width="22" height="8" rx="2"/><rect x="229" y="92" width="22" height="8" rx="2"/>
-        <rect x="256" y="92" width="22" height="8" rx="2"/><rect x="283" y="92" width="22" height="8" rx="2"/>
-        <rect x="310" y="92" width="22" height="8" rx="2"/><rect x="337" y="92" width="22" height="8" rx="2"/>
-        <rect x="364" y="92" width="22" height="8" rx="2"/><rect x="391" y="92" width="22" height="8" rx="2"/>
-      </g>
-      <!-- Pedestrian walking -->
-      <g transform="translate(160 50)">
-        <circle cx="0" cy="0" r="9" fill="#D4A574"/>
-        <rect x="-6" y="10" width="12" height="18" rx="4" fill="#4a7ac7"/>
-        <line x1="-4" y1="28" x2="-6" y2="45" stroke="#3a5a9a" stroke-width="3" stroke-linecap="round"/>
-        <line x1="4" y1="28" x2="6" y2="45" stroke="#3a5a9a" stroke-width="3" stroke-linecap="round"/>
-      </g>
-      <!-- Child on bike -->
-      <g transform="translate(345 50)">
-        <circle cx="0" cy="0" r="8" fill="#C49060"/>
-        <rect x="-5" y="8" width="10" height="15" rx="3" fill="#e05a1a"/>
-        <circle cx="-12" cy="30" r="7" fill="none" stroke="#666" stroke-width="2"/>
-        <circle cx="12" cy="30" r="7" fill="none" stroke="#666" stroke-width="2"/>
-        <line x1="-12" y1="23" x2="0" y2="14" stroke="#666" stroke-width="1.5"/>
-        <line x1="0" y1="14" x2="12" y2="23" stroke="#666" stroke-width="1.5"/>
-      </g>
-      <!-- Red car slowing -->
-      <g transform="translate(186 125)">
-        <rect x="0" y="0" width="80" height="50" rx="5" fill="#CC0000"/>
-        <rect x="10" y="4" width="60" height="28" rx="7" fill="#990000"/>
-        <circle cx="14" cy="52" r="8" fill="#0a0a0a"/><circle cx="66" cy="52" r="8" fill="#0a0a0a"/>
-        <rect x="-3" y="14" width="7" height="7" rx="2" fill="#FFE566"/>
-        <ellipse cx="-8" cy="17" rx="12" ry="6" fill="rgba(255,224,102,0.1)"/>
-        <!-- brakes on = rear lights bright -->
-        <rect x="76" y="14" width="7" height="7" rx="2" fill="#FF1111"/>
-        <ellipse cx="90" cy="17" rx="10" ry="5" fill="rgba(255,17,17,0.2)"/>
-      </g>
-      <!-- 20 sign -->
-      <g transform="translate(418 40)">
-        <circle cx="22" cy="22" r="22" fill="rgba(204,0,0,0.12)" stroke="#CC0000" stroke-width="2"/>
-        <text x="22" y="29" text-anchor="middle" fill="#CC0000" font-size="18" font-weight="bold" font-family="sans-serif">20</text>
-      </g>
-    </svg>`
-  }
-];
-
-/* ══════════════════════════════════════════════════════
-   TIPS
-══════════════════════════════════════════════════════ */
-const TIPS = [
-  { ico:'🚦', ar:'استخدم إشارات الانعطاف دائماً قبل تغيير الاتجاه بوقت كافٍ', en:'Always use turn signals well in advance before changing direction' },
-  { ico:'🪞', ar:'تحقق من المرايا قبل كل تغيير مسار', en:'Check all mirrors before every lane change' },
-  { ico:'🔒', ar:'ارتدِ حزام الأمان دائماً وتأكد من جميع الركاب', en:'Always wear your seatbelt and ensure all passengers do too' },
-  { ico:'📵', ar:'لا هاتف أثناء القيادة مطلقاً — لا حتى على اليد الحرة', en:'No phone while driving — not even hands-free in heavy traffic' },
-  { ico:'😴', ar:'خذ استراحة فورية عند الشعور بالنعاس — نوم 20 دقيقة يكفي', en:'Stop immediately when drowsy — a 20-min power nap is enough' },
-  { ico:'⚡', ar:'التزم بالسرعات المحددة وخفّفها في المناطق السكنية', en:'Obey speed limits and slow down in residential areas' },
-  { ico:'↔️', ar:'حافظ على مسافة أمان ثلاث ثوانٍ من المركبة الأمامية', en:'Maintain a 3-second following distance from the vehicle ahead' },
-  { ico:'🧘', ar:'تحلَّ بالهدوء وتجنب القيادة العدوانية', en:'Stay calm and avoid aggressive or impulsive driving' },
-  { ico:'👁', ar:'كن يقظاً وتوقع تصرفات مستخدمي الطريق الآخرين', en:'Stay alert and anticipate other road users\' actions' },
-  { ico:'🚫', ar:'القيادة تحت تأثير أي مادة = خطر على الجميع، حظر تام', en:'Driving under any substance = risk to all — absolute prohibition' },
-];
-
-/* ══════════════════════════════════════════════════════
-   APP STATE
-══════════════════════════════════════════════════════ */
-let lang = 'ar';
-let qi = 0, score = 0, answered = false;
-let timerInt = null, timeLeft = 0;
-
-/* ══════════════════════════════════════════════════════
-   LANGUAGE
-══════════════════════════════════════════════════════ */
-function setLang(l) {
-  lang = l;
-  document.getElementById('ROOT').dir = l === 'ar' ? 'rtl' : 'ltr';
-  document.getElementById('btn-ar').classList.toggle('on', l === 'ar');
-  document.getElementById('btn-en').classList.toggle('on', l === 'en');
-  renderIntro();
-  renderTips();
-}
-function T(o) { return o[lang] || o['ar'] || o['en'] || ''; }
-
-function renderIntro() {
-  const ar = lang === 'ar';
-  document.getElementById('i-badge').textContent  = ar ? 'حملة السلامة المرورية' : 'Road Safety Campaign';
-  document.getElementById('i-title').innerHTML    = ar
-    ? 'كل رحلة<br>تستحق <span>السلامة</span>'
-    : 'Every Journey<br>Deserves <span>Safety</span>';
-  document.getElementById('i-sub').textContent    = ar
-    ? 'نرفع وعي فريق Lamprell بأهمية القيادة الآمنة والمسؤولة على الطرق — لأن كل قرار تتخذه خلف المقود يمكن أن يُنقذ حياة.'
-    : 'We build road safety awareness for the Lamprell team — because every decision behind the wheel can save a life.';
-  document.getElementById('i-c1').textContent     = ar ? '5 أسئلة تفاعلية' : '5 Interactive Questions';
-  document.getElementById('i-c2').textContent     = ar ? 'صح / خطأ + اختيارات' : 'True/False + MCQ';
-  document.getElementById('i-c3').textContent     = ar ? 'بدون ضغط وقت' : 'No Time Pressure';
-  document.getElementById('i-start').textContent  = ar ? 'ابدأ الاختبار ←' : 'Start Quiz →';
-  document.getElementById('i-tips').textContent   = ar ? '📋 نصائح القيادة الآمنة' : '📋 Safe Driving Tips';
-  document.getElementById('t-title').textContent  = ar ? '🛡 نصائح القيادة الآمنة' : '🛡 Safe Driving Tips';
-  document.getElementById('t-back').textContent   = ar ? 'رجوع' : 'Back';
-  document.getElementById('t-start').textContent  = ar ? 'ابدأ الاختبار ←' : 'Start Quiz →';
+  );
 }
 
-function renderTips() {
-  document.getElementById('tips-content').innerHTML = TIPS.map(t => `
-    <div class="tip-item">
-      <span class="tip-ico">${t.ico}</span>
-      <span class="tip-text">${T(t)}</span>
-    </div>`).join('');
+function PRDetail({pr,users,user,canApprove,onBack,onApprove}){
+  const[showApprove,setShowApprove]=useState(null);
+  const req=users.find(u=>u.id===pr.requestedBy);
+  const total=pr.items.reduce((s,i)=>s+(i.total||0),0);
+  return(
+    <div className="fade" style={{padding:28,maxWidth:900,margin:"0 auto"}}>
+      <button onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",color:C.textMd,fontSize:13,marginBottom:18}}>← رجوع إلى القائمة</button>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18,flexWrap:"wrap",gap:10}}>
+        <div>
+          <div style={{fontSize:11,color:C.textLt,marginBottom:4,direction:"ltr"}}>{pr.number}</div>
+          <div style={{fontSize:20,fontWeight:700,color:C.text}}>{pr.title}</div>
+          <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
+            <Badge label={getDept(pr.department).name} color={getDept(pr.department).color} bg={getDept(pr.department).bg}/>
+            <StatusBadge status={pr.status} map={PR_STATUS}/>
+            <Badge label={pr.priority==="urgent"?"⚡ عاجل":pr.priority==="low"?"أولوية منخفضة":"أولوية عادية"} color={pr.priority==="urgent"?C.red:C.textMd} bg={pr.priority==="urgent"?C.redBg:C.bg2}/>
+          </div>
+        </div>
+        {canApprove&&<div style={{display:"flex",gap:8}}>
+          <Btn variant="success" icon="✅" onClick={()=>setShowApprove({action:pr.status==="approved"?"complete":"approve"})}>
+            {pr.status==="approved"?"تأكيد الإتمام":"موافقة على الطلب"}
+          </Btn>
+          <Btn variant="danger" icon="✕" onClick={()=>setShowApprove({action:"reject"})}>رفض الطلب</Btn>
+        </div>}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16,marginBottom:16}}>
+        <Card style={{padding:20}}>
+          <div style={{fontSize:14,fontWeight:700,marginBottom:14,color:C.text}}>📦 البنود المطلوبة</div>
+          <table>
+            <thead><tr style={{background:C.bg}}>{["البند","الوصف","الكمية","الوحدة","سعر الوحدة","الإجمالي"].map(h=>
+              <th key={h} style={{padding:"8px 12px",fontSize:11,fontWeight:700,color:C.textLt,textAlign:"right",borderBottom:"1px solid "+C.border}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {pr.items.map(item=><tr key={item.id} style={{borderBottom:"1px solid "+C.border}}>
+                <td style={{padding:"9px 12px",fontSize:13,fontWeight:600}}>{item.name}</td>
+                <td style={{padding:"9px 12px",fontSize:12,color:C.textMd}}>{item.description||"—"}</td>
+                <td style={{padding:"9px 12px",fontSize:13,fontWeight:600,textAlign:"center"}}>{item.quantity}</td>
+                <td style={{padding:"9px 12px",fontSize:12,color:C.textMd,textAlign:"center"}}>{item.unit}</td>
+                <td style={{padding:"9px 12px",fontSize:13,direction:"ltr",textAlign:"left"}}>{fmtNum(item.unitPrice)} ﷼</td>
+                <td style={{padding:"9px 12px",fontSize:13,fontWeight:700,direction:"ltr",textAlign:"left",color:C.navy}}>{fmtNum(item.total)} ﷼</td>
+              </tr>)}
+              <tr style={{background:C.goldBg}}>
+                <td colSpan={5} style={{padding:"10px 12px",fontSize:13,fontWeight:700,textAlign:"left",color:C.goldText}}>الإجمالي التقديري</td>
+                <td style={{padding:"10px 12px",fontSize:15,fontWeight:800,direction:"ltr",textAlign:"left",color:C.gold}}>{fmtNum(total)} ﷼</td>
+              </tr>
+            </tbody>
+          </table>
+          {pr.justification&&<div style={{marginTop:16,padding:"12px 14px",background:C.bg,borderRadius:8}}>
+            <div style={{fontSize:12,fontWeight:700,color:C.textMd,marginBottom:4}}>سبب الطلب / المبرر</div>
+            <div style={{fontSize:13,color:C.text,lineHeight:1.7}}>{pr.justification}</div>
+          </div>}
+        </Card>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <Card style={{padding:18}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>📋 تفاصيل الطلب</div>
+            {[["مقدم الطلب",req?.name||"—"],["القسم",getDept(pr.department).name],["تاريخ الطلب",fmt(pr.requestDate)],["الإجمالي التقديري",fmtNum(total)+" ﷼"]].map(([k,v])=>
+              <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid "+C.border,fontSize:13}}>
+                <span style={{color:C.textMd}}>{k}</span><span style={{fontWeight:600,direction:k==="الإجمالي التقديري"?"ltr":"rtl"}}>{v}</span>
+              </div>)}
+          </Card>
+          <Card style={{padding:18}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>🔄 سير الموافقة</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:C.goldBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>🟡</div>
+                <div style={{fontSize:12}}>
+                  <div style={{fontWeight:600}}>تقديم الطلب</div>
+                  <div style={{color:C.textLt,fontSize:11}}>{fmt(pr.requestDate)} · {req?.name}</div>
+                </div>
+              </div>
+              {pr.approvals.map((a,i)=>{
+                const approver=users.find(u=>u.id===a.by);
+                return <div key={i} style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <div style={{width:28,height:28,borderRadius:"50%",background:a.action==="approved"||a.action==="completed"?C.greenBg:C.redBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>
+                    {a.action==="approved"||a.action==="completed"?"✅":"❌"}
+                  </div>
+                  <div style={{fontSize:12}}>
+                    <div style={{fontWeight:600}}>{a.action==="approved"?"موافقة":a.action==="completed"?"إتمام":"رفض"} — {approver?.name||a.role}</div>
+                    <div style={{color:C.textLt,fontSize:11}}>{fmt(a.date)}{a.note&&" · "+a.note}</div>
+                  </div>
+                </div>;
+              })}
+              {pr.status==="pending"&&<div style={{display:"flex",gap:8,alignItems:"center",opacity:0.5}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:C.bg2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>⏳</div>
+                <div style={{fontSize:12,color:C.textLt}}>بانتظار موافقة المدير المباشر</div>
+              </div>}
+            </div>
+          </Card>
+        </div>
+      </div>
+      {showApprove&&<ApproveModal data={showApprove} onClose={()=>setShowApprove(null)} onConfirm={n=>{onApprove(showApprove.action,n);setShowApprove(null);}}/>}
+    </div>
+  );
 }
 
-/* ══════════════════════════════════════════════════════
-   NAVIGATION
-══════════════════════════════════════════════════════ */
-function goTo(id) {
-  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
-  document.getElementById(id).classList.add('on');
+function NewPRModal({user,onClose,onSave}){
+  const[title,setTitle]=useState("");
+  const[priority,setPriority]=useState("normal");
+  const[justification,setJustification]=useState("");
+  const[items,setItems]=useState([{id:"i1",name:"",description:"",quantity:1,unit:"قطعة",unitPrice:0,total:0}]);
+  const total=items.reduce((s,i)=>s+(i.total||0),0);
+
+  const updateItem=(idx,field,val)=>{
+    setItems(prev=>prev.map((item,i)=>{
+      if(i!==idx) return item;
+      const updated={...item,[field]:field==="quantity"||field==="unitPrice"?parseFloat(val)||0:val};
+      if(field==="quantity"||field==="unitPrice") updated.total=(updated.quantity||0)*(updated.unitPrice||0);
+      return updated;
+    }));
+  };
+  const addItem=()=>setItems(p=>[...p,{id:"i"+(p.length+1),name:"",description:"",quantity:1,unit:"قطعة",unitPrice:0,total:0}]);
+  const removeItem=(idx)=>setItems(p=>p.filter((_,i)=>i!==idx));
+
+  const save=()=>{
+    if(!title.trim()||items.some(i=>!i.name.trim())){alert("يرجى ملء العنوان وجميع أسماء البنود");return;}
+    const now=new Date();
+    const num="PR-"+now.getFullYear()+"-"+String(Math.floor(Math.random()*9000)+1000);
+    onSave({id:genId(),number:num,title:title.trim(),department:user.department,requestedBy:user.id,requestDate:today(),
+      priority,status:"pending",items,totalEstimated:total,justification,notes:"",approvals:[],createdAt:now.toISOString()});
+  };
+
+  return <Modal title="🛒 طلب مشتريات جديد" onClose={onClose} width={720}>
+    <Input label="عنوان الطلب" value={title} onChange={setTitle} required placeholder="مثال: شراء معدات مكتبية للقسم"/>
+    <Select label="الأولوية" value={priority} onChange={setPriority} options={[{value:"normal",label:"عادية"},{value:"urgent",label:"⚡ عاجلة"},{value:"low",label:"منخفضة"}]}/>
+    <div style={{marginBottom:16}}>
+      <div style={{fontSize:13,fontWeight:600,color:C.textMd,marginBottom:10}}>📦 البنود المطلوبة <span style={{color:C.red}}>*</span></div>
+      <div style={{overflowX:"auto"}}>
+        <table style={{minWidth:600}}>
+          <thead><tr style={{background:C.bg}}>
+            {["اسم البند","الوصف","الكمية","الوحدة","سعر الوحدة (﷼)","الإجمالي",""].map(h=>
+              <th key={h} style={{padding:"7px 10px",fontSize:11,fontWeight:700,color:C.textLt,textAlign:"right",whiteSpace:"nowrap",borderBottom:"1px solid "+C.border}}>{h}</th>)}
+          </tr></thead>
+          <tbody>{items.map((item,idx)=><tr key={item.id} style={{borderBottom:"1px solid "+C.border}}>
+            <td style={{padding:"6px 8px"}}><input value={item.name} onChange={e=>updateItem(idx,"name",e.target.value)} placeholder="اسم البند" style={{width:"100%",padding:"6px 8px",border:"1px solid "+C.border,borderRadius:6,fontSize:12}}/></td>
+            <td style={{padding:"6px 8px"}}><input value={item.description} onChange={e=>updateItem(idx,"description",e.target.value)} placeholder="وصف اختياري" style={{width:"100%",padding:"6px 8px",border:"1px solid "+C.border,borderRadius:6,fontSize:12}}/></td>
+            <td style={{padding:"6px 8px"}}><input type="number" value={item.quantity} onChange={e=>updateItem(idx,"quantity",e.target.value)} min="1" style={{width:60,padding:"6px 8px",border:"1px solid "+C.border,borderRadius:6,fontSize:12,textAlign:"center",direction:"ltr"}}/></td>
+            <td style={{padding:"6px 8px"}}><select value={item.unit} onChange={e=>updateItem(idx,"unit",e.target.value)} style={{padding:"6px 8px",border:"1px solid "+C.border,borderRadius:6,fontSize:12}}>
+              {["قطعة","متر","كيلو","لتر","علبة","رزمة","مجموعة","طن","م²"].map(u=><option key={u}>{u}</option>)}
+            </select></td>
+            <td style={{padding:"6px 8px"}}><input type="number" value={item.unitPrice} onChange={e=>updateItem(idx,"unitPrice",e.target.value)} min="0" style={{width:80,padding:"6px 8px",border:"1px solid "+C.border,borderRadius:6,fontSize:12,direction:"ltr"}}/></td>
+            <td style={{padding:"6px 8px",fontSize:13,fontWeight:700,direction:"ltr",textAlign:"left",color:C.navy,whiteSpace:"nowrap"}}>{fmtNum(item.total)} ﷼</td>
+            <td style={{padding:"6px 8px"}}>{items.length>1&&<button onClick={()=>removeItem(idx)} style={{background:C.redBg,border:"none",borderRadius:6,padding:"4px 8px",cursor:"pointer",color:C.red,fontSize:12}}>✕</button>}</td>
+          </tr>)}</tbody>
+          <tfoot><tr style={{background:C.goldBg}}>
+            <td colSpan={5} style={{padding:"8px 10px",fontSize:13,fontWeight:700,color:C.goldText}}>الإجمالي التقديري</td>
+            <td style={{padding:"8px 10px",fontSize:14,fontWeight:800,direction:"ltr",textAlign:"left",color:C.gold}}>{fmtNum(total)} ﷼</td>
+            <td/>
+          </tr></tfoot>
+        </table>
+      </div>
+      <button onClick={addItem} style={{marginTop:8,padding:"6px 14px",background:C.bg2,border:"1px dashed "+C.border,borderRadius:7,cursor:"pointer",fontSize:12,color:C.textMd}}>+ إضافة بند آخر</button>
+    </div>
+    <Textarea label="سبب الطلب / المبرر" value={justification} onChange={setJustification} placeholder="اشرح سبب الطلب ومدى الحاجة إليه..." rows={3}/>
+    <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
+      <Btn variant="ghost" onClick={onClose}>إلغاء</Btn>
+      <Btn variant="gold" onClick={save}>تقديم الطلب</Btn>
+    </div>
+  </Modal>;
 }
 
-/* ══════════════════════════════════════════════════════
-   PARTICLES
-══════════════════════════════════════════════════════ */
-function spawnParticles() {
-  const scene = document.querySelector('.bg-scene');
-  setInterval(() => {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    const size = Math.random() * 4 + 1;
-    p.style.cssText = `
-      width:${size}px;height:${size}px;
-      left:${Math.random()*100}%;bottom:0;
-      background:rgba(204,0,0,${Math.random()*.25+.05});
-      animation-duration:${Math.random()*8+6}s;
-      animation-delay:${Math.random()*2}s;
-    `;
-    scene.appendChild(p);
-    setTimeout(() => p.remove(), 14000);
-  }, 600);
+function ApproveModal({data,onClose,onConfirm}){
+  const[note,setNote]=useState("");
+  const isReject=data.action==="reject";
+  return <Modal title={isReject?"رفض الطلب":data.action==="complete"?"تأكيد إتمام الشراء":"الموافقة على الطلب"} onClose={onClose} width={420}>
+    <div style={{padding:"12px 14px",background:isReject?C.redBg:C.greenBg,borderRadius:8,marginBottom:16,fontSize:13,color:isReject?C.redText:C.greenText}}>
+      {isReject?"هل تريد رفض هذا الطلب؟ يرجى ذكر السبب.":data.action==="complete"?"تأكيد أن عملية الشراء قد تمت بالفعل.":"هل تريد الموافقة على هذا الطلب والمضي به للمرحلة التالية؟"}
+    </div>
+    <Textarea label={isReject?"سبب الرفض":"ملاحظة (اختياري)"} value={note} onChange={setNote} rows={3} placeholder={isReject?"يرجى ذكر سبب واضح للرفض...":"أي ملاحظات إضافية..."}/>
+    <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+      <Btn variant="ghost" onClick={onClose}>إلغاء</Btn>
+      <Btn variant={isReject?"danger":"success"} onClick={()=>{if(isReject&&!note.trim()){alert("يرجى ذكر سبب الرفض");return;}onConfirm(note);}}>
+        {isReject?"تأكيد الرفض":data.action==="complete"?"تأكيد الإتمام":"تأكيد الموافقة"}
+      </Btn>
+    </div>
+  </Modal>;
+}
+""")
+
+out.append(r"""
+// ─── TASKS ───────────────────────────────────────────────────────────────
+function TasksView({user,tasks,setTasks,users}){
+  const[filter,setFilter]=useState("all");
+  const[showNew,setShowNew]=useState(false);
+  const myTasks=tasks.filter(t=>t.assignedTo===user.id||t.assignedBy===user.id||(user.role!=="employee"));
+  const visible=filter==="all"?myTasks:myTasks.filter(t=>t.status===filter);
+
+  const updateStatus=(id,status)=>setTasks(l=>l.map(t=>t.id===id?{...t,status,completedAt:status==="completed"?today():t.completedAt}:t));
+
+  return(
+    <div className="fade" style={{padding:28,maxWidth:1000,margin:"0 auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div><div style={{fontSize:20,fontWeight:700}}>✅ المهام</div>
+          <div style={{fontSize:13,color:C.textLt,marginTop:3}}>إدارة وتتبع المهام اليومية</div></div>
+        {user.role!=="employee"&&<Btn variant="gold" icon="➕" onClick={()=>setShowNew(true)}>مهمة جديدة</Btn>}
+      </div>
+      <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
+        {[["all","الكل"],["new","جديدة"],["in-progress","قيد التنفيذ"],["completed","مكتملة"],["cancelled","ملغاة"]].map(([k,v])=>
+          <button key={k} onClick={()=>setFilter(k)} style={{padding:"6px 16px",borderRadius:20,border:"1.5px solid "+(filter===k?C.gold:C.border),background:filter===k?C.goldBg:"transparent",color:filter===k?C.goldText:C.textMd,fontSize:12,fontWeight:filter===k?700:400,cursor:"pointer"}}>{v}</button>
+        )}
+      </div>
+      <div style={{display:"grid",gap:10}}>
+        {visible.length===0?<Empty msg="لا توجد مهام"/>:visible.map(task=>{
+          const assignee=users.find(u=>u.id===task.assignedTo);
+          const assigner=users.find(u=>u.id===task.assignedBy);
+          const canChange=task.assignedTo===user.id||task.assignedBy===user.id||user.role==="admin";
+          return(
+            <Card key={task.id} style={{padding:18}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,flexWrap:"wrap"}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:6,flexWrap:"wrap"}}>
+                    <StatusBadge status={task.status} map={TASK_STATUS}/>
+                    <Badge label={task.priority==="high"?"🔴 عالية":task.priority==="medium"?"🟡 متوسطة":"🟢 منخفضة"}
+                      color={task.priority==="high"?C.red:task.priority==="medium"?C.yellow:C.green}
+                      bg={task.priority==="high"?C.redBg:task.priority==="medium"?C.yellowBg:C.greenBg}/>
+                    <Badge label={getDept(task.department).name} color={getDept(task.department).color} bg={getDept(task.department).bg}/>
+                  </div>
+                  <div style={{fontSize:15,fontWeight:700,marginBottom:6}}>{task.title}</div>
+                  {task.description&&<div style={{fontSize:13,color:C.textMd,marginBottom:8,lineHeight:1.6}}>{task.description}</div>}
+                  <div style={{display:"flex",gap:16,fontSize:12,color:C.textLt,flexWrap:"wrap"}}>
+                    <span>👤 مُسند إلى: <b style={{color:C.text}}>{assignee?.name||"—"}</b></span>
+                    <span>من: <b style={{color:C.text}}>{assigner?.name||"—"}</b></span>
+                    {task.dueDate&&<span>📅 موعد التسليم: <b style={{color:new Date(task.dueDate)<new Date()&&task.status!=="completed"?C.red:C.text}}>{fmt(task.dueDate)}</b></span>}
+                    {task.completedAt&&<span>✅ تم: {fmt(task.completedAt)}</span>}
+                  </div>
+                </div>
+                {canChange&&task.status!=="completed"&&task.status!=="cancelled"&&(
+                  <div style={{display:"flex",gap:6,flexShrink:0}}>
+                    {task.status==="new"&&<Btn size="sm" variant="ghost" onClick={()=>updateStatus(task.id,"in-progress")}>بدء التنفيذ</Btn>}
+                    {task.status==="in-progress"&&<Btn size="sm" variant="success" onClick={()=>updateStatus(task.id,"completed")}>إنهاء</Btn>}
+                    <Btn size="sm" variant="danger" onClick={()=>updateStatus(task.id,"cancelled")}>إلغاء</Btn>
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+      {showNew&&<NewTaskModal user={user} users={users} onClose={()=>setShowNew(false)} onSave={t=>{setTasks(l=>[t,...l]);setShowNew(false);}}/>}
+    </div>
+  );
 }
 
-/* ══════════════════════════════════════════════════════
-   QUIZ FLOW
-══════════════════════════════════════════════════════ */
-function startQuiz() {
-  qi = 0; score = 0; answered = false;
-  goTo('scr-quiz');
-  loadQ();
+function NewTaskModal({user,users,onClose,onSave}){
+  const[title,setTitle]=useState("");const[desc,setDesc]=useState("");
+  const[assignedTo,setAssignedTo]=useState("");const[dept,setDept]=useState(user.department);
+  const[dueDate,setDueDate]=useState("");const[priority,setPriority]=useState("medium");
+  const save=()=>{
+    if(!title.trim()||!assignedTo){alert("يرجى ملء العنوان والمسند إليه");return;}
+    onSave({id:genId(),title,description:desc,assignedTo,assignedBy:user.id,department:dept,dueDate,priority,status:"new",createdAt:today(),completedAt:null});
+  };
+  const deptUsers=users.filter(u=>u.active&&(dept==="all"||u.department===dept));
+  return <Modal title="✅ مهمة جديدة" onClose={onClose}>
+    <Input label="عنوان المهمة" value={title} onChange={setTitle} required/>
+    <Textarea label="الوصف" value={desc} onChange={setDesc} rows={2} placeholder="تفاصيل المهمة..."/>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <Select label="القسم" value={dept} onChange={v=>{setDept(v);setAssignedTo("");}} options={[{value:"all",label:"الكل"},...DEPTS.map(d=>({value:d.id,label:d.name}))]}/>
+      <Select label="المسند إليه" value={assignedTo} onChange={setAssignedTo} required options={[{value:"",label:"اختر موظفاً..."},...deptUsers.map(u=>({value:u.id,label:u.name+" - "+u.position}))]}/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <Select label="الأولوية" value={priority} onChange={setPriority} options={[{value:"high",label:"🔴 عالية"},{value:"medium",label:"🟡 متوسطة"},{value:"low",label:"🟢 منخفضة"}]}/>
+      <Input label="موعد التسليم" value={dueDate} onChange={setDueDate} type="date"/>
+    </div>
+    <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:8}}>
+      <Btn variant="ghost" onClick={onClose}>إلغاء</Btn>
+      <Btn variant="gold" onClick={save}>إنشاء المهمة</Btn>
+    </div>
+  </Modal>;
+}
+""")
+
+out.append(r"""
+// ─── ANNOUNCEMENTS ────────────────────────────────────────────────────────
+function AnnouncementsView({user,announcements,setAnnouncements,users}){
+  const[showNew,setShowNew]=useState(false);
+  const visible=announcements.filter(a=>a.departments.includes("all")||a.departments.includes(user.department)).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  return(
+    <div className="fade" style={{padding:28,maxWidth:900,margin:"0 auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
+        <div><div style={{fontSize:20,fontWeight:700}}>📢 الإعلانات الداخلية</div>
+          <div style={{fontSize:13,color:C.textLt,marginTop:3}}>آخر الأخبار والإعلانات من إدارة الفرع</div></div>
+        {(user.role==="admin"||user.role==="manager")&&<Btn variant="gold" icon="➕" onClick={()=>setShowNew(true)}>إعلان جديد</Btn>}
+      </div>
+      {visible.length===0?<Empty msg="لا توجد إعلانات حالياً" icon="📭"/>:
+      <div style={{display:"grid",gap:14}}>
+        {visible.map(ann=>{
+          const author=users.find(u=>u.id===ann.author);
+          return(
+            <Card key={ann.id} style={{padding:22,borderRight:ann.priority==="urgent"?"4px solid "+C.red:"4px solid "+C.gold}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,flexWrap:"wrap"}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
+                    {ann.priority==="urgent"&&<Badge label="⚡ عاجل" color={C.red} bg={C.redBg}/>}
+                    {ann.pinned&&<Badge label="📌 مثبت" color={C.blue} bg={C.blueBg}/>}
+                    {ann.departments.includes("all")?<Badge label="للجميع" color={C.textMd} bg={C.bg2}/>:
+                      ann.departments.map(d=><Badge key={d} label={getDept(d).name} color={getDept(d).color} bg={getDept(d).bg}/>)}
+                  </div>
+                  <div style={{fontSize:17,fontWeight:700,marginBottom:8}}>{ann.title}</div>
+                  <div style={{fontSize:14,color:C.textMd,lineHeight:1.75,whiteSpace:"pre-wrap"}}>{ann.content}</div>
+                </div>
+                <div style={{fontSize:11,color:C.textLt,textAlign:"left",flexShrink:0}}>
+                  <div style={{marginBottom:3}}>{fmt(ann.date)}</div>
+                  <div>{author?.name||"—"}</div>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>}
+      {showNew&&<NewAnnModal user={user} onClose={()=>setShowNew(false)} onSave={a=>{setAnnouncements(l=>[a,...l]);setShowNew(false);}}/>}
+    </div>
+  );
 }
 
-function loadQ() {
-  answered = false;
-  const q = Q[qi];
-  const ar = lang === 'ar';
-  const LETTERS = ['A','B','C','D'];
+function NewAnnModal({user,onClose,onSave}){
+  const[title,setTitle]=useState("");const[content,setContent]=useState("");
+  const[depts,setDepts]=useState(["all"]);const[priority,setPriority]=useState("normal");
+  const toggleDept=d=>{
+    if(d==="all"){setDepts(["all"]);return;}
+    setDepts(p=>{const n=p.filter(x=>x!=="all");return n.includes(d)?n.filter(x=>x!==d):[...n,d];});
+  };
+  const save=()=>{
+    if(!title.trim()||!content.trim()){alert("يرجى ملء العنوان والمحتوى");return;}
+    onSave({id:genId(),title,content,author:user.id,departments:depts.length?depts:["all"],date:today(),priority,pinned:false});
+  };
+  return <Modal title="📢 إعلان جديد" onClose={onClose}>
+    <Input label="عنوان الإعلان" value={title} onChange={setTitle} required/>
+    <Textarea label="محتوى الإعلان" value={content} onChange={setContent} rows={5} required/>
+    <Select label="الأولوية" value={priority} onChange={setPriority} options={[{value:"normal",label:"عادية"},{value:"urgent",label:"⚡ عاجلة"}]}/>
+    <div style={{marginBottom:16}}>
+      <div style={{fontSize:13,fontWeight:600,color:C.textMd,marginBottom:8}}>الموجَّه إلى</div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+        {[{id:"all",name:"الجميع"},...DEPTS].map(d=>{
+          const active=depts.includes(d.id);
+          return <button key={d.id} onClick={()=>toggleDept(d.id)} style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid "+(active?C.gold:C.border),background:active?C.goldBg:"transparent",color:active?C.goldText:C.textMd,fontSize:12,fontWeight:active?700:400,cursor:"pointer"}}>{d.name}</button>;
+        })}
+      </div>
+    </div>
+    <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+      <Btn variant="ghost" onClick={onClose}>إلغاء</Btn>
+      <Btn variant="gold" onClick={save}>نشر الإعلان</Btn>
+    </div>
+  </Modal>;
+}
+""")
 
-  // Dots
-  const dotsEl = document.getElementById('q-dots');
-  dotsEl.innerHTML = Q.map((_,i) => `
-    <div class="q-dot" style="width:${i===qi?28:18}px"
-         class="q-dot${i<qi?' done':i===qi?' active':''}">
-    </div>`).join('');
-  // Fix dot colors manually
-  const dots = dotsEl.querySelectorAll('.q-dot');
-  dots.forEach((d,i) => {
-    d.style.width = (i === qi ? '28px' : '18px');
-    if (i < qi)  { d.style.background='var(--red)'; d.style.opacity='.5'; }
-    else if(i===qi){ d.style.background='var(--red)'; d.style.opacity='1'; }
-    else        { d.style.background='var(--wf)'; d.style.opacity='1'; }
-  });
+out.append(r"""
+// ─── LEAVES ─────────────────────────────────────────────────────────────
+function LeavesView({user,leaves,setLeaves,users}){
+  const[showNew,setShowNew]=useState(false);
+  const[tab,setTab]=useState("my");
+  const myLeaves=leaves.filter(l=>l.userId===user.id).sort((a,b)=>new Date(b.appliedDate)-new Date(a.appliedDate));
+  const pendingAll=leaves.filter(l=>l.status==="pending"&&l.userId!==user.id&&(user.role==="admin"||(user.role==="manager")));
 
-  document.getElementById('q-label').textContent = `${ar?'سؤال':'Q'} ${qi+1} / ${Q.length}`;
-  document.getElementById('q-illus').innerHTML = q.illus;
-  document.getElementById('q-badge').textContent = T(q.cat);
-  document.getElementById('q-text').textContent = T(q.q);
+  const approve=(id,action,reason)=>{
+    setLeaves(l=>l.map(x=>x.id===id?{...x,status:action==="approve"?"approved":"rejected",approvedBy:user.id,approvedDate:today(),rejectReason:action==="reject"?reason:null}:x));
+  };
 
-  // Timer display (decorative — no time limit)
-  const tNum = document.getElementById('t-num');
-  const tFg  = document.getElementById('t-fg');
-  tNum.textContent = qi + 1;
-  tNum.className = 'timer-num';
-  tFg.className  = 'timer-fg';
-  tFg.style.strokeDashoffset = 157 * (1 - (qi+1)/Q.length);
+  const tabs=[{id:"my",label:"طلباتي",count:myLeaves.length},{id:"pending",label:"بانتظار الموافقة",count:pendingAll.length}];
 
-  // Options
-  const wrap = document.getElementById('q-opts');
-  if (q.type === 'tf') {
-    wrap.innerHTML = `<div class="tf-row">
-      <button class="tf-btn" id="tf0" onclick="doTF(0)">
-        <span class="tf-emoji">✅</span>
-        <span class="tf-word">${ar ? 'صحيح' : 'TRUE'}</span>
-      </button>
-      <button class="tf-btn" id="tf1" onclick="doTF(1)">
-        <span class="tf-emoji">❌</span>
-        <span class="tf-word">${ar ? 'خطأ' : 'FALSE'}</span>
-      </button>
-    </div>`;
-  } else {
-    const opts = q.opts[lang] || q.opts['ar'];
-    wrap.innerHTML = `<div class="mc-list">${opts.map((o,i) => `
-      <button class="mc-btn" id="mc${i}" onclick="doMC(${i})">
-        <span class="mc-letter">${LETTERS[i]}</span>
-        <span>${esc(o)}</span>
-      </button>`).join('')}</div>`;
-  }
+  return(
+    <div className="fade" style={{padding:28,maxWidth:900,margin:"0 auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div><div style={{fontSize:20,fontWeight:700}}>📅 طلبات الإجازة</div>
+          <div style={{fontSize:13,color:C.textLt,marginTop:3}}>تقديم ومتابعة طلبات الإجازة</div></div>
+        <Btn variant="gold" icon="➕" onClick={()=>setShowNew(true)}>طلب إجازة جديد</Btn>
+      </div>
+      {(user.role==="admin"||user.role==="manager")&&<Tabs tabs={tabs} active={tab} onChange={setTab}/>}
+      {(tab==="my"||(user.role==="employee"))&&(
+        myLeaves.length===0?<Empty msg="لم تقدم أي طلبات إجازة بعد"/>:
+        <div style={{display:"grid",gap:10}}>
+          {myLeaves.map(l=>(
+            <Card key={l.id} style={{padding:18}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+                <div>
+                  <div style={{display:"flex",gap:8,marginBottom:6}}><StatusBadge status={l.status} map={LEAVE_STATUS}/><Badge label={LEAVE_TYPES[l.type]} color={C.blue} bg={C.blueBg}/></div>
+                  <div style={{fontSize:14,fontWeight:600,marginBottom:4}}>{l.reason}</div>
+                  <div style={{fontSize:12,color:C.textLt}}>{fmt(l.startDate)} — {fmt(l.endDate)} · <b>{l.days} أيام</b></div>
+                  {l.rejectReason&&<div style={{fontSize:12,color:C.red,marginTop:4}}>سبب الرفض: {l.rejectReason}</div>}
+                </div>
+                <div style={{fontSize:11,color:C.textLt,textAlign:"left"}}>تاريخ التقديم<br/>{fmt(l.appliedDate)}</div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+      {tab==="pending"&&(user.role==="admin"||user.role==="manager")&&(
+        pendingAll.length===0?<Empty msg="لا توجد طلبات بانتظار موافقتك"/>:
+        <div style={{display:"grid",gap:10}}>
+          {pendingAll.map(l=>{
+            const emp=users.find(u=>u.id===l.userId);
+            return(
+              <Card key={l.id} style={{padding:18}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+                  <div>
+                    <div style={{display:"flex",gap:8,marginBottom:6}}><Badge label={LEAVE_TYPES[l.type]} color={C.blue} bg={C.blueBg}/><Badge label={getDept(emp?.department||"").name} color={getDept(emp?.department||"").color} bg={getDept(emp?.department||"").bg}/></div>
+                    <div style={{fontSize:14,fontWeight:700,marginBottom:3}}>{emp?.name} — {l.reason}</div>
+                    <div style={{fontSize:12,color:C.textLt}}>{fmt(l.startDate)} — {fmt(l.endDate)} · <b>{l.days} أيام</b></div>
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <Btn variant="success" size="sm" onClick={()=>approve(l.id,"approve")}>موافقة</Btn>
+                    <Btn variant="danger" size="sm" onClick={()=>{const r=prompt("سبب الرفض:");if(r!==null)approve(l.id,"reject",r);}}>رفض</Btn>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+      {showNew&&<NewLeaveModal user={user} onClose={()=>setShowNew(false)} onSave={l=>{setLeaves(p=>[l,...p]);setShowNew(false);}}/>}
+    </div>
+  );
 }
 
-function doTF(sel) {
-  if (answered) return;
-  answered = true;
-  const q = Q[qi];
-  const ok = sel === q.correct;
-  if (ok) score++;
-  const t0 = document.getElementById('tf0');
-  const t1 = document.getElementById('tf1');
-  [t0,t1].forEach(b => b.disabled = true);
-  if (ok) {
-    document.getElementById(`tf${sel}`).classList.add('correct');
-    showFB(true, document.getElementById(`tf${sel}`));
-  } else {
-    document.getElementById(`tf${sel}`).classList.add('wrong');
-    document.getElementById(`tf${q.correct}`).classList.add('reveal');
-    showFB(false);
-  }
-  showExplain(q);
-  setTimeout(next, 2200);
+function NewLeaveModal({user,onClose,onSave}){
+  const[type,setType]=useState("annual");
+  const[start,setStart]=useState("");const[end,setEnd]=useState("");
+  const[reason,setReason]=useState("");
+  const days=start&&end?Math.max(0,Math.round((new Date(end)-new Date(start))/(1000*60*60*24))+1):0;
+  const save=()=>{
+    if(!start||!end||!reason.trim()){alert("يرجى ملء جميع الحقول");return;}
+    if(days<=0){alert("تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية");return;}
+    onSave({id:genId(),userId:user.id,type,startDate:start,endDate:end,days,reason,status:"pending",appliedDate:today(),approvedBy:null,approvedDate:null,rejectReason:null});
+  };
+  return <Modal title="📅 طلب إجازة جديد" onClose={onClose}>
+    <Select label="نوع الإجازة" value={type} onChange={setType} options={Object.entries(LEAVE_TYPES).map(([k,v])=>({value:k,label:v}))}/>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <Input label="تاريخ البداية" value={start} onChange={setStart} type="date" required/>
+      <Input label="تاريخ الانتهاء" value={end} onChange={setEnd} type="date" required/>
+    </div>
+    {days>0&&<div style={{padding:"10px 14px",background:C.goldBg,borderRadius:8,marginBottom:14,fontSize:13,color:C.goldText,fontWeight:600}}>عدد الأيام: {days} أيام</div>}
+    <Textarea label="سبب الإجازة" value={reason} onChange={setReason} required rows={3}/>
+    <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+      <Btn variant="ghost" onClick={onClose}>إلغاء</Btn>
+      <Btn variant="gold" onClick={save}>تقديم الطلب</Btn>
+    </div>
+  </Modal>;
+}
+""")
+
+out.append(r"""
+// ─── DIRECTORY ──────────────────────────────────────────────────────────
+function DirectoryView({users,user}){
+  const[deptFilter,setDeptFilter]=useState("all");
+  const[search,setSearch]=useState("");
+  const visible=users.filter(u=>u.active&&(deptFilter==="all"||u.department===deptFilter)&&(!search||u.name.includes(search)||u.position.includes(search)||u.username.includes(search)));
+  return(
+    <div className="fade" style={{padding:28,maxWidth:1000,margin:"0 auto"}}>
+      <div style={{marginBottom:20}}><div style={{fontSize:20,fontWeight:700}}>👥 الدليل الداخلي</div>
+        <div style={{fontSize:13,color:C.textLt,marginTop:3}}>جميع موظفي فرع لامبريل السعودي</div></div>
+      <Card style={{padding:14,marginBottom:16}}>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  بحث بالاسم أو المنصب..."
+            style={{flex:1,minWidth:200,padding:"8px 12px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,outline:"none"}}/>
+          <select value={deptFilter} onChange={e=>setDeptFilter(e.target.value)}
+            style={{padding:"8px 12px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,background:C.white}}>
+            <option value="all">كل الأقسام ({users.filter(u=>u.active).length})</option>
+            {DEPTS.map(d=><option key={d.id} value={d.id}>{d.name} ({users.filter(u=>u.active&&u.department===d.id).length})</option>)}
+          </select>
+        </div>
+      </Card>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:12}}>
+        {visible.map(u=>{
+          const dept=getDept(u.department);
+          const initials=u.name.split(" ").slice(0,2).map(w=>w[0]).join("");
+          return(
+            <Card key={u.id} style={{padding:18}}>
+              <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                <div style={{width:44,height:44,borderRadius:"50%",background:dept.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:dept.color,flexShrink:0}}>{initials}</div>
+                <div style={{flex:1,overflow:"hidden"}}>
+                  <div style={{fontSize:14,fontWeight:700,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</div>
+                  <div style={{fontSize:12,color:C.textMd,marginBottom:4}}>{u.position}</div>
+                  <Badge label={dept.name} color={dept.color} bg={dept.bg} size={10}/>
+                </div>
+              </div>
+              <div style={{marginTop:12,borderTop:"1px solid "+C.border,paddingTop:10,display:"grid",gap:4}}>
+                {[["📧",u.email,"ltr"],["📞",u.phone,"ltr"],["🔑",u.username,"ltr"],["📅","منذ "+fmt(u.joinDate),"rtl"]].map(([ic,val,dir])=>
+                  <div key={ic} style={{fontSize:11,color:C.textLt,display:"flex",gap:6,alignItems:"center"}}>
+                    <span>{ic}</span><span style={{direction:dir,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{val}</span>
+                  </div>)}
+              </div>
+              <div style={{marginTop:8}}><Badge label={ROLES[u.role]} color={u.role==="admin"?C.red:u.role==="manager"?C.blue:C.textMd} bg={u.role==="admin"?C.redBg:u.role==="manager"?C.blueBg:C.bg2}/></div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+""")
+
+out.append(r"""
+// ─── ADMIN ───────────────────────────────────────────────────────────────
+function AdminView({user,users,setUsers}){
+  const[tab,setTab]=useState("users");
+  const[showNew,setShowNew]=useState(false);
+  const[editUser,setEditUser]=useState(null);
+
+  const toggleActive=(id)=>setUsers(l=>l.map(u=>u.id===id?{...u,active:!u.active}:u));
+  const saveUser=(u)=>{
+    if(u.id) setUsers(l=>l.map(x=>x.id===u.id?u:x));
+    else setUsers(l=>[...l,{...u,id:genId(),joinDate:today(),active:true}]);
+    setShowNew(false);setEditUser(null);
+  };
+
+  return(
+    <div className="fade" style={{padding:28,maxWidth:1000,margin:"0 auto"}}>
+      <div style={{marginBottom:20}}><div style={{fontSize:20,fontWeight:700}}>⚙️ إدارة النظام</div>
+        <div style={{fontSize:13,color:C.textLt,marginTop:3}}>إدارة المستخدمين وإعدادات الفرع</div></div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+        <Stat label="إجمالي المستخدمين" value={users.filter(u=>u.active).length} icon="👥" color={C.navy}/>
+        <Stat label="المديرون" value={users.filter(u=>u.role==="manager"&&u.active).length} icon="👔" color={C.blue}/>
+        <Stat label="الموظفون" value={users.filter(u=>u.role==="employee"&&u.active).length} icon="👤" color={C.green}/>
+        <Stat label="غير نشطين" value={users.filter(u=>!u.active).length} icon="⛔" color={C.red}/>
+      </div>
+      <Card style={{padding:0,overflow:"hidden"}}>
+        <div style={{padding:"14px 18px",borderBottom:"1px solid "+C.border,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontSize:15,fontWeight:700}}>👥 قائمة المستخدمين</div>
+          <Btn variant="gold" size="sm" icon="➕" onClick={()=>setShowNew(true)}>إضافة مستخدم</Btn>
+        </div>
+        <table>
+          <thead><tr style={{background:C.bg}}>
+            {["الاسم","اسم المستخدم","القسم","المنصب","الصلاحية","الحالة","إجراءات"].map(h=>
+              <th key={h} style={{padding:"9px 14px",fontSize:11,fontWeight:700,color:C.textLt,textAlign:"right",borderBottom:"1px solid "+C.border}}>{h}</th>)}
+          </tr></thead>
+          <tbody>{users.sort((a,b)=>a.name.localeCompare(b.name,"ar")).map(u=>(
+            <tr key={u.id} style={{borderBottom:"1px solid "+C.border,opacity:u.active?1:0.55}}>
+              <td style={{padding:"10px 14px",fontSize:13,fontWeight:600}}>{u.name}</td>
+              <td style={{padding:"10px 14px",fontSize:12,direction:"ltr",color:C.blue}}>{u.username}</td>
+              <td style={{padding:"10px 14px"}}><Badge label={getDept(u.department).name} color={getDept(u.department).color} bg={getDept(u.department).bg} size={11}/></td>
+              <td style={{padding:"10px 14px",fontSize:12,color:C.textMd}}>{u.position}</td>
+              <td style={{padding:"10px 14px"}}><Badge label={ROLES[u.role]} color={u.role==="admin"?C.red:u.role==="manager"?C.blue:C.textMd} bg={u.role==="admin"?C.redBg:u.role==="manager"?C.blueBg:C.bg2} size={11}/></td>
+              <td style={{padding:"10px 14px"}}><Badge label={u.active?"نشط":"موقوف"} color={u.active?C.green:C.red} bg={u.active?C.greenBg:C.redBg} size={11}/></td>
+              <td style={{padding:"10px 14px"}}>
+                <div style={{display:"flex",gap:6}}>
+                  <Btn size="sm" variant="ghost" onClick={()=>setEditUser(u)}>تعديل</Btn>
+                  {u.id!==user.id&&<Btn size="sm" variant={u.active?"danger":"success"} onClick={()=>toggleActive(u.id)}>{u.active?"إيقاف":"تفعيل"}</Btn>}
+                </div>
+              </td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </Card>
+      {(showNew||editUser)&&<UserModal user={editUser||null} onClose={()=>{setShowNew(false);setEditUser(null);}} onSave={saveUser}/>}
+    </div>
+  );
 }
 
-function doMC(sel) {
-  if (answered) return;
-  answered = true;
-  const q = Q[qi];
-  const ok = sel === q.correct;
-  if (ok) score++;
-  document.querySelectorAll('.mc-btn').forEach(b => b.disabled = true);
-  if (ok) {
-    document.getElementById(`mc${sel}`).classList.add('correct');
-    showFB(true, document.getElementById(`mc${sel}`));
-  } else {
-    document.getElementById(`mc${sel}`).classList.add('wrong');
-    document.getElementById(`mc${q.correct}`)?.classList.add('correct');
-    showFB(false);
-  }
-  showExplain(q);
-  setTimeout(next, 2400);
+function UserModal({user:editUser,onClose,onSave}){
+  const[name,setName]=useState(editUser?.name||"");
+  const[username,setUsername]=useState(editUser?.username||"");
+  const[password,setPassword]=useState(editUser?.password||"");
+  const[role,setRole]=useState(editUser?.role||"employee");
+  const[dept,setDept]=useState(editUser?.department||"operations");
+  const[position,setPosition]=useState(editUser?.position||"");
+  const[email,setEmail]=useState(editUser?.email||"");
+  const[phone,setPhone]=useState(editUser?.phone||"");
+  const save=()=>{
+    if(!name.trim()||!username.trim()||(!editUser&&!password.trim())||!position.trim()){alert("يرجى ملء جميع الحقول الإلزامية");return;}
+    onSave({...editUser,name,username,password:password||editUser?.password,role,department:dept,position,email,phone});
+  };
+  return <Modal title={editUser?"✏️ تعديل مستخدم":"➕ مستخدم جديد"} onClose={onClose}>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <Input label="الاسم الكامل" value={name} onChange={setName} required/>
+      <Input label="اسم المستخدم" value={username} onChange={setUsername} required placeholder="ahmed.ali"/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <Input label={editUser?"كلمة مرور جديدة (اتركها فارغة للإبقاء)":"كلمة المرور"} value={password} onChange={setPassword} type="password" required={!editUser}/>
+      <Input label="المنصب الوظيفي" value={position} onChange={setPosition} required/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <Select label="القسم" value={dept} onChange={setDept} options={DEPTS.map(d=>({value:d.id,label:d.name}))}/>
+      <Select label="الصلاحية" value={role} onChange={setRole} options={[{value:"employee",label:"موظف"},{value:"manager",label:"مدير قسم"},{value:"admin",label:"مدير النظام"}]}/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      <Input label="البريد الإلكتروني" value={email} onChange={setEmail} type="email" placeholder="name@lambriel.sa"/>
+      <Input label="رقم الجوال" value={phone} onChange={setPhone} placeholder="05XXXXXXXX"/>
+    </div>
+    <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:8}}>
+      <Btn variant="ghost" onClick={onClose}>إلغاء</Btn>
+      <Btn variant="gold" onClick={save}>{editUser?"حفظ التعديلات":"إضافة المستخدم"}</Btn>
+    </div>
+  </Modal>;
+}
+""")
+
+out.append(r"""
+// ─── APP ─────────────────────────────────────────────────────────────────
+function App(){
+  const[users,setUsers]=useStore("users",DEFAULT_USERS);
+  const[procurement,setProcurement]=useStore("procurement",DEFAULT_PROCUREMENT);
+  const[tasks,setTasks]=useStore("tasks",DEFAULT_TASKS);
+  const[announcements,setAnnouncements]=useStore("announcements",DEFAULT_ANNOUNCEMENTS);
+  const[leaves,setLeaves]=useStore("leaves",DEFAULT_LEAVES);
+  const[currentUser,setCurrentUser]=useState(()=>{try{const s=localStorage.getItem("lmb_session");return s?JSON.parse(s):null;}catch(e){return null;}});
+  const[view,setView]=useState("dashboard");
+
+  const login=(u)=>{setCurrentUser(u);try{localStorage.setItem("lmb_session",JSON.stringify(u));}catch(e){}setView("dashboard");};
+  const logout=()=>{setCurrentUser(null);try{localStorage.removeItem("lmb_session");}catch(e){}};
+
+  if(!currentUser) return <LoginView users={users} onLogin={login}/>;
+
+  const viewMap={
+    dashboard:<Dashboard user={currentUser} procurement={procurement} tasks={tasks} announcements={announcements} leaves={leaves} setView={setView}/>,
+    procurement:<ProcurementView user={currentUser} procurement={procurement} setProcurement={setProcurement} users={users}/>,
+    tasks:<TasksView user={currentUser} tasks={tasks} setTasks={setTasks} users={users}/>,
+    announcements:<AnnouncementsView user={currentUser} announcements={announcements} setAnnouncements={setAnnouncements} users={users}/>,
+    leaves:<LeavesView user={currentUser} leaves={leaves} setLeaves={setLeaves} users={users}/>,
+    directory:<DirectoryView users={users} user={currentUser}/>,
+    admin:<AdminView user={currentUser} users={users} setUsers={setUsers}/>,
+  };
+
+  return(
+    <div style={{display:"flex",minHeight:"100vh",background:C.bg}}>
+      <Sidebar view={view} setView={setView} user={currentUser} onLogout={logout}/>
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{flex:1,overflowY:"auto"}}>
+          {viewMap[view]||viewMap.dashboard}
+        </div>
+        <div style={{padding:"8px 20px",background:C.white,borderTop:"1px solid "+C.border,fontSize:11,color:C.textLt,display:"flex",justifyContent:"space-between"}}>
+          <span>Lambriel Co. — الفرع السعودي</span>
+          <span style={{direction:"ltr"}}>Internal System v1.0 · {new Date().getFullYear()}</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function showExplain(q) {
-  const ar = lang === 'ar';
-  const el = document.createElement('div');
-  el.className = 'explain-box';
-  el.innerHTML = `<strong style="color:var(--w)">${ar?'💡 هل تعلم؟':'💡 Did you know?'}</strong><br>${T(q.explain)}`;
-  document.getElementById('q-opts').appendChild(el);
-}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+""")
 
-function next() {
-  qi++;
-  if (qi < Q.length) loadQ();
-  else endQuiz();
-}
+out.append('</script>\n</body>\n</html>')
 
-/* ══════════════════════════════════════════════════════
-   VISUAL FEEDBACK
-══════════════════════════════════════════════════════ */
-function showFB(ok, btnEl) {
-  const ov = document.getElementById('fb-overlay');
-  const ic = document.getElementById('fb-emoji');
-  ic.textContent = ok ? '✅' : '❌';
-  // Re-trigger animation
-  ic.style.animation = 'none';
-  ic.offsetWidth;
-  ic.style.animation = '';
-  ov.classList.add('show');
-  if (ok && btnEl) {
-    const r = btnEl.getBoundingClientRect();
-    const f = document.createElement('div');
-    f.className = 'score-pop';
-    f.textContent = '+1';
-    f.style.left = (r.left + r.width/2 - 24) + 'px';
-    f.style.top  = (r.top - 10) + 'px';
-    document.body.appendChild(f);
-    setTimeout(() => f.remove(), 1300);
-  }
-  setTimeout(() => ov.classList.remove('show'), 950);
-}
-
-/* ══════════════════════════════════════════════════════
-   CONFETTI
-══════════════════════════════════════════════════════ */
-function launchConfetti() {
-  const cv = document.getElementById('confetti');
-  const ctx = cv.getContext('2d');
-  cv.width = innerWidth; cv.height = innerHeight;
-  const cols = ['#CC0000','#FF3333','#FFFFFF','#FFD700','#FF8888','#FF6666'];
-  const pieces = Array.from({length:160}, () => ({
-    x: Math.random()*cv.width,
-    y: Math.random()*cv.height - cv.height,
-    w: Math.random()*14+4, h: Math.random()*8+3,
-    r: Math.random()*Math.PI*2,
-    vy: Math.random()*5+2, vx: (Math.random()-.5)*4,
-    vr: (Math.random()-.5)*.22,
-    col: cols[Math.floor(Math.random()*cols.length)], op:1
-  }));
-  let f = 0;
-  (function draw() {
-    ctx.clearRect(0,0,cv.width,cv.height);
-    pieces.forEach(p => {
-      p.y+=p.vy; p.x+=p.vx; p.r+=p.vr; p.op=Math.max(0,1-f/140);
-      ctx.save(); ctx.globalAlpha=p.op;
-      ctx.translate(p.x+p.w/2,p.y+p.h/2); ctx.rotate(p.r);
-      ctx.fillStyle=p.col; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
-      ctx.restore();
-    });
-    f++;
-    if(f<160) requestAnimationFrame(draw);
-    else ctx.clearRect(0,0,cv.width,cv.height);
-  })();
-}
-
-/* ══════════════════════════════════════════════════════
-   RESULT
-══════════════════════════════════════════════════════ */
-function endQuiz() {
-  const ar  = lang === 'ar';
-  const acc = Math.round((score / Q.length) * 100);
-  const off = 440 * (1 - score / Q.length);
-
-  document.getElementById('r-score').textContent   = score;
-  document.getElementById('r-denom').textContent   = `/${Q.length}`;
-  document.getElementById('r-correct').textContent = score;
-  document.getElementById('r-acc').textContent     = acc + '%';
-  document.getElementById('r-cl').textContent      = ar ? 'إجابات صحيحة' : 'Correct';
-  document.getElementById('r-al').textContent      = ar ? 'الدقة' : 'Accuracy';
-  document.getElementById('r-restart').textContent = ar ? 'إعادة المحاولة ↺' : 'Try Again ↺';
-  document.getElementById('r-share').textContent   = ar ? '📤 مشاركة النتيجة' : '📤 Share Result';
-
-  // Certificate
-  document.getElementById('cert-date').textContent = new Date().toLocaleDateString(ar?'ar-SA':'en-GB',{year:'numeric',month:'long',day:'numeric'});
-
-  // Grade & message
-  let grade, msg, msgClass, ringColor;
-  if (score === Q.length) {
-    grade='🏆 '+( ar?'ممتاز!':'Excellent!');
-    msg= ar?'أنت قدوة في السلامة المرورية — معرفتك الكاملة تحمي نفسك وتحمي الآخرين.':'You are a road safety role model. Your complete knowledge protects yourself and everyone around you.';
-    msgClass='r-perfect'; ringColor='#00C07A';
-    launchConfetti();
-  } else if (acc>=80) {
-    grade='✅ '+(ar?'جيد جداً!':'Very Good!');
-    msg= ar?'أداء رائع — راجع النقاط التي أخطأت فيها لتصبح مثالياً.':'Great performance — review what you missed to reach perfection.';
-    msgClass='r-good'; ringColor='var(--w)';
-  } else if (acc>=60) {
-    grade='⚠️ '+(ar?'جيد':'Good');
-    msg= ar?'أداء مقبول — الطريق تحتاج يقظة ومعرفة أعمق. راجع النصائح.':'Acceptable performance — roads require deeper knowledge. Review the tips.';
-    msgClass='r-warn'; ringColor='var(--amber)';
-  } else {
-    grade='🔴 '+(ar?'بحاجة لمراجعة':'Needs Review');
-    msg= ar?'راجع نصائح القيادة الآمنة واحرص على تطبيقها في كل رحلة.':'Please review the safe driving tips and commit to applying them on every journey.';
-    msgClass='r-bad'; ringColor='var(--danger)';
-  }
-
-  document.getElementById('r-grade').textContent  = grade;
-  document.getElementById('r-grade').style.color  = ringColor;
-  document.querySelector('.rr-fg').style.stroke    = ringColor;
-  const msgEl = document.getElementById('r-msg');
-  msgEl.className = 'result-msg ' + msgClass;
-  msgEl.textContent = msg;
-
-  // Tips strip
-  const strip = document.getElementById('r-tips');
-  strip.innerHTML = `
-    <div class="tips-strip-title">${ar?'🛡 تذكّر دائماً':'🛡 Always Remember'}</div>
-    ${TIPS.slice(0,4).map(t=>`
-      <div class="ts-row"><span class="ts-ico">${t.ico}</span><span>${T(t)}</span></div>`).join('')}`;
-
-  goTo('scr-result');
-
-  // Animate ring + counter
-  setTimeout(() => {
-    document.getElementById('rr-fg').style.strokeDashoffset = off;
-    // Animate score counter
-    let n = 0;
-    const iv = setInterval(() => {
-      document.getElementById('r-score').textContent = n;
-      if (n++ >= score) clearInterval(iv);
-    }, 200);
-  }, 200);
-}
-
-/* ══════════════════════════════════════════════════════
-   SHARE
-══════════════════════════════════════════════════════ */
-function shareResult() {
-  const ar = lang === 'ar';
-  const txt = ar
-    ? `حصلت على ${score}/${Q.length} في اختبار السلامة المرورية لـ Lamprell 🚗🛡 #السلامة_أولاً #Lamprell_HSE`
-    : `I scored ${score}/${Q.length} in the Lamprell Road Safety Quiz 🚗🛡 #SafetyFirst #LamprellHSE`;
-  if (navigator.share) {
-    navigator.share({ text: txt, title: 'Lamprell Road Safety' });
-  } else {
-    navigator.clipboard?.writeText(txt).then(() =>
-      alert(ar ? '✓ تم نسخ النتيجة — الصقها أينما تريد!' : '✓ Result copied — paste it anywhere!')
-    );
-  }
-}
-
-/* ══════════════════════════════════════════════════════
-   UTILS
-══════════════════════════════════════════════════════ */
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-/* ── INIT ── */
-renderIntro();
-renderTips();
-spawnParticles();
-</script>
-</body>
-</html>
+html = "".join(out)
+with open('/mnt/user-data/outputs/Lambriel_KSA.html','w',encoding='utf-8') as f:
+    f.write(html)
+print(f"Done: {len(html):,} bytes ({len(html)//1024} KB)")
