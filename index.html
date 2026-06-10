@@ -1,8 +1,4 @@
-out = open('/mnt/user-data/outputs/Lamprell_KSA.html', 'w', encoding='utf-8')
-
-def w(s): out.write(s)
-
-w('''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -34,9 +30,7 @@ table{border-collapse:collapse;width:100%}
 const {useState,useEffect,useRef,useMemo,useCallback,memo}=React;
 const TAX_RATE=0.15;
 
-''')
 
-w(r"""
 const T={
 en:{app:"Lamprell KSA",tagline:"Internal Operations System",by:"Developed by Hamad Al-Hzem",
 dashboard:"Dashboard",procurement:"Procurement",tasks:"Tasks",announcements:"Announcements",
@@ -207,9 +201,7 @@ const fmtN=(n,dec=0)=>(+n||0).toLocaleString("en-US",{minimumFractionDigits:dec,
 const fmtSAR=(n)=>fmtN(n,2)+" SAR";
 const isOD=(d,st)=>{if(!d||st==="completed"||st==="cancelled")return false;return new Date(d)<new Date();};
 function calcTax(subtotal){const tax=subtotal*TAX_RATE;return{subtotal,tax,grand:subtotal+tax};}
-""")
 
-w(r"""
 // ─── DEFAULT DATA ────────────────────────────────────────────────────────────
 const DU=[
   {id:"u1",name:"Hamad Al-Hzem",username:"admin",password:"admin@2025",role:"admin",department:"it",position:"System Administrator",email:"h.alhzem@lamprell.sa",phone:"0500000001",joinDate:"2023-01-01",active:true,customPerms:null},
@@ -273,9 +265,7 @@ const DL=[
   {id:"lr2",userId:"u11",type:"sick",startDate:"2025-06-05",endDate:"2025-06-06",days:2,reason:"Medical — doctor certificate provided",status:"approved",appliedDate:"2025-06-05",approvedBy:"u8",approvedDate:"2025-06-05",rejectReason:null},
   {id:"lr3",userId:"u12",type:"emergency",startDate:"2025-06-10",endDate:"2025-06-10",days:1,reason:"Family emergency",status:"approved",appliedDate:"2025-06-09",approvedBy:"u3",approvedDate:"2025-06-09",rejectReason:null},
 ];
-""")
 
-w(r"""
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
 function dlCSV(rows,filename){
   if(!rows?.length)return;
@@ -369,9 +359,7 @@ function Progress({value,color=C.orange,height=6,showLabel=false}){
     {showLabel&&<span style={{fontSize:11,fontWeight:700,color,minWidth:30}}>{pct}%</span>}
   </div>;
 }
-""")
 
-w(r"""
 // ─── UI PRIMITIVES ──────────────────────────────────────────────────────────
 function Btn({ch,onClick,type="button",v="primary",sz="md",icon,dis,full,style:st={}}){
   const[h,sh]=useState(false);
@@ -513,9 +501,7 @@ function FileUp({attachments,setAttachments,lang}){
     </div>}
   </div>;
 }
-""")
 
-w(r"""
 // ─── LAYOUT ──────────────────────────────────────────────────────────────────
 function Sidebar({view,setView,user,onLogout,lang}){
   const nav=[
@@ -600,9 +586,7 @@ function TopBar({title,subtitle,lang,setLang,ch}){
     </div>
   );
 }
-""")
 
-w(r"""
 // ─── LOGIN ──────────────────────────────────────────────────────────────────
 function Login({users,onLogin}){
   const[usr,su]=useState("");const[pwd,sp]=useState("");const[err,se]=useState("");const[ld,sl]=useState(false);
@@ -667,9 +651,7 @@ function Login({users,onLogin}){
     </div>
   );
 }
-""")
 
-w(r"""
 // ─── DASHBOARDS ──────────────────────────────────────────────────────────────
 function AdminDash({user,procurement,tasks,announcements,leaves,users,lang,setView}){
   const isRTL=lang==="ar";
@@ -835,9 +817,7 @@ function UserDash({user,procurement,tasks,announcements,leaves,lang,setView}){
     </div>
   );
 }
-""")
 
-w(r"""
 // ─── PROCUREMENT ─────────────────────────────────────────────────────────────
 function Procurement({user,procurement,setProcurement,users,lang}){
   const[tab,setTab]=useState("list");
@@ -1130,9 +1110,7 @@ function ActionModal({data,lang,onClose,onConfirm}){
     <Lbl label={isReject?tr(lang,"rejectReason"):tr(lang,"approveNote")} req={isReject} ch={<Txta val={note} set={sn} rows={3} ph={isReject?(lang==="ar"?"سبب واضح للرفض…":"Clear reason for rejection…"):(lang==="ar"?"ملاحظة (اختياري)":"Note (optional)")}/>}/>
   </Modal>;
 }
-""")
 
-w(r"""
 // ─── TASKS ───────────────────────────────────────────────────────────────────
 function Tasks({user,tasks,setTasks,users,lang}){
   const[tab,setTab]=useState("mine");
@@ -1350,9 +1328,7 @@ function NewTask({user,users,lang,onClose,onSave}){
     <Lbl label={tr(lang,"attachments")} ch={<FileUp attachments={attachments} setAttachments={sat} lang={lang}/>}/>
   </Modal>;
 }
-""")
 
-w(r"""
 // ─── ANNOUNCEMENTS ───────────────────────────────────────────────────────────
 function Announcements({user,announcements,setAnnouncements,users,lang}){
   const[showNew,sN]=useState(false);
@@ -1547,9 +1523,7 @@ function Directory({users,user,lang}){
     </div>
   );
 }
-""")
 
-w(r"""
 // ─── REPORTS ─────────────────────────────────────────────────────────────────
 function Reports({user,procurement,tasks,leaves,users,lang}){
   if(!gp(user,"reports","view"))return <div style={{padding:40,textAlign:"center",color:C.textLt}}>{tr(lang,"noPermission")}</div>;
@@ -1614,9 +1588,7 @@ function Reports({user,procurement,tasks,leaves,users,lang}){
     </div>
   );
 }
-""")
 
-w(r"""
 // ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
 function AdminPanel2({user,users,setUsers,lang}){
   if(!gp(user,"admin","users")&&!gp(user,"admin","perms"))return <div style={{padding:40,textAlign:"center",color:C.textLt}}>{tr(lang,"noPermission")}</div>;
@@ -1752,9 +1724,7 @@ function PermsModal({u,lang,onClose,onSave}){
     </div>}
   </Modal>;
 }
-""")
 
-w(r"""
 // ─── APP ─────────────────────────────────────────────────────────────────────
 function App(){
   const[users,sU]=useStore("users",DU);
@@ -1819,8 +1789,7 @@ function App(){
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-""")
 
-w('\n</script>\n</body>\n</html>')
-out.close()
-print(f"Done: {__import__('os').path.getsize('/mnt/user-data/outputs/Lamprell_KSA.html'):,} bytes")
+</script>
+</body>
+</html>
